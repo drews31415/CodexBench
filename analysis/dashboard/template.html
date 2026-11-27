@@ -5,28 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
 <meta name="aah-bundle-sha256" content="{{BUNDLE_SHA256}}">
+<meta name="description" content="Adaptive Agent Harness — Codex를 위한 검증 가능한 적응형 실행 환경. 저장된 실험 기록에서 만든 연구 대시보드.">
 <title>AAH {{TITLE}} — 저장된 실험 기록 기반</title>
 <style>
 {{STYLE}}
 </style>
 </head>
 <body>
+<button class="skip" type="button" data-act="skip">본문으로 건너뛰기</button>
 <header class="top">
-  <div class="brand">
-    <h1>Adaptive Agent Harness <span class="sub">{{TITLE}}</span></h1>
-    <p class="source">{{SUBTITLE}} · 모델·Codex 호출 없음 · 데이터 SHA-256 <code>{{BUNDLE_SHA256}}</code></p>
+  <div class="topbar">
+    <div class="brand"><span class="logo" aria-hidden="true">AAH</span><div class="bt"><strong>Adaptive Agent Harness</strong><span class="sub">{{TITLE}} · Codex를 위한 검증 가능한 적응형 실행 환경</span></div></div>
+    <div class="meta"><span class="src" title="{{SUBTITLE}}">저장된 기록 기반 · 모델·Codex 호출 없음</span><span class="hashchip" title="이 페이지에 내장된 데이터의 SHA-256 (전체 값은 실험 감사 화면): {{BUNDLE_SHA256}}">데이터 <code>{{BUNDLE_SHA256_SHORT}}…</code></span><button class="btn sm theme" type="button" data-act="theme" aria-label="화면 모드 전환">화면 자동</button></div>
   </div>
   <nav class="tabs" role="tablist" aria-label="대시보드 화면">
-    <button role="tab" data-tab="overview">개요</button>
-    <button role="tab" data-tab="benchmark">조건 비교</button>
-    <button role="tab" data-tab="trace">실행 추적</button>
-    <button role="tab" data-tab="graph">그래프 탐색</button>
-    <button role="tab" data-tab="context">컨텍스트</button>
-    <button role="tab" data-tab="replay">복구 Replay</button>
-    <button role="tab" data-tab="audit">실험 감사</button>
+    <button role="tab" id="tab-overview" data-tab="overview" aria-controls="view">개요</button>
+    <button role="tab" id="tab-benchmark" data-tab="benchmark" aria-controls="view">조건 비교</button>
+    <button role="tab" id="tab-trace" data-tab="trace" aria-controls="view">실행 추적</button>
+    <button role="tab" id="tab-graph" data-tab="graph" aria-controls="view">그래프 탐색</button>
+    <button role="tab" id="tab-context" data-tab="context" aria-controls="view">컨텍스트</button>
+    <button role="tab" id="tab-replay" data-tab="replay" aria-controls="view">복구 Replay</button>
+    <button role="tab" id="tab-audit" data-tab="audit" aria-controls="view">실험 감사</button>
   </nav>
 </header>
-<main id="view" tabindex="-1"><noscript><p class="panel">이 대시보드는 JavaScript가 필요하다. 같은 수치는 docs/submission/EVIDENCE_PACK.md와 data/ 폴더의 CSV에서 확인할 수 있다.</p></noscript></main>
+<main id="view" tabindex="-1" role="tabpanel"><noscript><p class="panel">이 대시보드는 JavaScript가 필요하다. 같은 수치는 docs/submission/EVIDENCE_PACK.md와 data/ 폴더의 CSV에서 확인할 수 있다.</p></noscript></main>
 <div id="tip" role="tooltip" hidden></div>
 <script id="aah-data" type="application/json">{{DATA}}</script>
 <script id="aah-figures" type="application/json">{{FIGURES}}</script>

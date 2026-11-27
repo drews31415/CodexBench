@@ -27,6 +27,7 @@ const fails = [];
 const probes = {};
 const graphs = new Set();
 const cases = new Set();
+const repos = new Set();
 let views = 0;
 const enc = encodeURIComponent;
 const check = (label, html) => {
@@ -56,6 +57,10 @@ for (const rid of info.releases) {
       graphs.add(g);
       probes["graph:" + g] = check("graph " + g, A.view(A.parseHash("#graph?" + base + "&graph=" + enc(g))));
     }
+    for (const t of o.repoTasks || []) {
+      repos.add(t);
+      probes["repo:" + t] = check("repo graph " + base + " " + t, A.view(A.parseHash("#graph?" + base + "&gmode=repo&rtask=" + enc(t))));
+    }
     for (const k of o.caseKeys) {
       cases.add(k);
       for (let s = 0; s < info.steps; s += 1) {
@@ -65,7 +70,14 @@ for (const rid of info.releases) {
   }
 }
 probes.badHash = check("bad hash", A.view(A.parseHash("#nope?release=zzz&exp=zzz&task=Q&cond=Z&step=99&graph=x&case=y")));
-const summary = { kind: info.kind, releases: info.releases.length, graphs: graphs.size, cases: cases.size };
+if (A.picks) {
+  probes.picks = JSON.stringify(A.picks({}), (k, v) => (k === "run" || k === "iv" || k === "exp" && typeof v === "object" ? undefined : v));
+  probes.badGraph = check("bad graph", A.view(A.parseHash("#graph?graph=nope")));
+  probes.badRepo = check("bad repo", A.view(A.parseHash("#graph?gmode=repo&rtask=nope")));
+  probes.badCase = check("bad case", A.view(A.parseHash("#replay?case=nope")));
+}
+if (A.stamp) probes.stamps = [A.stamp("2026-11-27T21:30:00Z"), A.stamp("2026-12-31T15:05:00Z"), A.stamp("2026-11-27T12:12:33Z")];
+const summary = { kind: info.kind, releases: info.releases.length, graphs: graphs.size, cases: cases.size, repos: repos.size, steps: info.steps };
 A.init(null, {});
 probes.empty = A.view(A.parseHash("#overview"));
 A.init({ experiments: {}, synthetic: { runs: {} } }, {});

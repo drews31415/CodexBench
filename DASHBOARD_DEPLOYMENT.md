@@ -1,6 +1,8 @@
 # 웹 대시보드 배포 가이드
 
-심사위원이 설치나 Codex 인증 없이 링크만으로 실험 결과를 확인하도록 웹 대시보드를 배포하는 절차다. 두 가지 방법이 있다. **이 저장소에서는 아직 배포·푸시를 하지 않았다.** "사용자 승인·인증이 필요한 단계"는 계정 소유자가 직접 해야 한다.
+심사위원이 설치나 Codex 인증 없이 링크만으로 실험 결과를 확인하도록 웹 대시보드를 배포하는 절차다. 두 가지 방법이 있다. "사용자 승인·인증이 필요한 단계"는 계정 소유자가 직접 해야 한다.
+
+**현재 상태 (2026-11-28 확인).** GitHub Pages가 `main` 브랜치의 `/docs`에서 배포 중이다: https://drews31415.github.io/CodexBench/dashboard/ . 배포본은 커밋 `84b839b`의 `docs/dashboard/index.html`과 바이트 단위로 같았다(SHA-256 `48bdc6df…`). 2026-11-28 대시보드 개선본은 아직 푸시하지 않았다 — 푸시는 계정 소유자 승인 대상이다.
 
 | 방법 | 24시간 접근 | 서버 | 권장 용도 |
 | --- | --- | --- | --- |
@@ -11,7 +13,7 @@
 
 ## A. 정적 페이지 (GitHub Pages, 권장)
 
-`docs/dashboard/index.html`은 `public_data/`에서 생성한 단일 HTML 파일이다. 화면 코드, 공개 데이터, 그림이 모두 들어 있고 외부 요청이 없다(CSP `default-src 'none'`). 7개 화면, release·실험 선택, 상태 배너, 마지막 갱신 시각을 제공한다. `python -m analysis.public_export export`·`release`를 실행할 때마다 자동으로 다시 만들어지므로 데이터와 어긋나지 않는다(테스트 `test_committed_site_reproduces_from_the_public_store`).
+`docs/dashboard/index.html`은 `public_data/`에서 생성한 단일 HTML 파일이다. 화면 코드, 공개 데이터, 그림이 모두 들어 있고 외부 요청이 없다(CSP `default-src 'none'`). 7개 화면, release·실험 선택, 상태 배너, 마지막 갱신 시각, 심사위원 빠른 탐색, 과제별 Repository Graph 탐색을 제공한다. `python -m analysis.public_export export`·`release`를 실행할 때마다 자동으로 다시 만들어지므로 데이터와 어긋나지 않는다(테스트 `test_committed_site_reproduces_from_the_public_store`).
 
 | 파일 | 역할 |
 | --- | --- |
@@ -19,13 +21,18 @@
 | `docs/index.html` | 사이트 루트에서 `dashboard/`로 이동하는 안내 페이지 |
 | `docs/.nojekyll` | GitHub Pages의 Jekyll 처리를 끈다. `docs/` 안 일부 문서에 Liquid 문법(`{{`)이 있어 Jekyll이 빌드를 실패시킬 수 있기 때문이다 |
 | `analysis/static_site.py` | 생성기 (`build`, `check`) |
+| `analysis/dashboard/template.html`, `app.js`, `style.css` | 웹 대시보드 원본 (개선본) |
+| `analysis/dashboard/submission-2026-11-27/` | 제출 시점 대시보드 원본의 고정 사본. `docs/submission/dashboard.html`은 이것으로만 만들어지므로 웹 대시보드를 고쳐도 제출본은 바뀌지 않는다 |
+| `public_data/repository_graphs/` | 8개 Main 과제의 Repository Graph. `python -m analysis.repository_graphs build`가 공개 과제 원본(`benchmarks/main_public/*/base`)에서 기존 빌더로 재추출한다(모델 호출 0). 실험 시점 그래프가 아니라고 화면에 표시한다 |
 
 ### 배포 절차
 
 1. **푸시 전 확인** (`PYTHONPATH=src;.`)
    ```powershell
+   python -m analysis.repository_graphs check    # REPOSITORY_GRAPHS_REPRODUCED
    python -m analysis.static_site check          # STATIC_SITE_REPRODUCED
    python -m analysis.public_export verify       # PUBLIC_STORE_VERIFIED
+   python -m pytest tests/integration/test_static_site.py -q   # 헤드리스 Chrome 화면 검사 포함 (Chrome이 없으면 건너뜀)
    ```
 2. **GitHub 저장소 생성·푸시 (U1·U2).** `docs/`와 `public_data/`가 커밋에 포함됐는지 확인한다.
 3. **Pages 켜기 (U7).** 저장소 Settings → Pages → Build and deployment → Source: *Deploy from a branch* → Branch: 배포 브랜치(예: `main`), Folder: `/docs` → Save.
@@ -37,7 +44,8 @@
 
 - **공개 범위.** GitHub Pages 사이트는 인터넷에 공개된다. 무료 요금제는 공개 저장소에서 Pages를 쓸 수 있고, 비공개 저장소의 Pages는 요금제에 따라 다르다(Settings → Pages에서 확인). `/docs` 폴더 전체가 게시되므로 `docs/` 안 문서도 함께 공개된다. 대시보드 데이터에는 과제 파일 경로·공개 검사 ID·run_id·결과 수치가 있고, 비공개 검사·정답 패치·에이전트 원문·인증 정보는 없다(U6).
 - **갱신.** 배포 브랜치에 푸시하면 Pages가 다시 배포한다. 브라우저 캐시 때문에 이전 화면이 보이면 새로고침한다. 화면 상단의 데이터 SHA-256과 "마지막 데이터 갱신" 시각으로 어느 데이터인지 확인할 수 있다.
-- **크기.** 현재 약 1.4MB. 실험이 늘면 실험당 약 0.7MB씩 커진다.
+- **크기.** 현재 약 1.5MB. 실험이 늘면 실험당 약 0.7MB씩 커진다.
+- **주소 형식.** `#<화면>?release=…&exp=…` 뒤에 화면별 선택(`task`·`cond`, `gmode=repo&rtask=…`, `graph=…&gnode=…`, `case=…&step=…`)이 붙는다. 탭 이동은 브라우저 뒤로·앞으로 가기로 되돌릴 수 있다. 없는 사례 ID나 화면을 주면 안내 문구와 함께 대표 사례를 보여 준다.
 
 ## B. Streamlit Community Cloud
 
@@ -123,7 +131,9 @@ macOS·Linux는 `.venv/bin/python`을 쓴다. `--server.address 127.0.0.1`은 �
 | 화면 테스트 (`streamlit.testing.v1.AppTest`) | 모든 화면, 그래프 진단 4건, Replay 사례 14건의 첫·마지막 단계, 실행 추적·컨텍스트 40개 조합, 무효 실험 표시, release 전환, 진행 중 실험, 데이터 없음 처리 |
 | 데이터 | `python -m analysis.public_export verify` → `PUBLIC_STORE_VERIFIED`, `check` → `PUBLIC_STORE_REPRODUCED` |
 
-**미확인:** 실제 Streamlit Community Cloud 배포와 공개 URL 접근(U1–U5 필요), 다크 모드 화면, Chrome 외 브라우저.
+| 정적 페이지 실제 브라우저 검사 (2026-11-28, `tests/integration/dashboard_browser.js`) | 헤드리스 Chrome으로 데스크톱(1366px)·모바일(390px) × 라이트·다크, 9개 화면과 8개 Repository Graph·12개 진단 그래프를 렌더링. 가로 넘침·글자 겹침·노드 밖 글자·노드 겹침·CSP 위반·네트워크 요청·콘솔 오류 0, 탭·뒤로가기·키보드·Replay 재생/일시정지·그래프 확대/필터/선택·복사·잘못된 주소 처리 확인 |
+
+**미확인:** 실제 Streamlit Community Cloud 배포와 공개 URL 접근(U4–U5), Streamlit 버전의 2026-11-28 화면 개선 반영(정적 페이지만 개선), Chrome 외 브라우저.
 
 ## 8. 문제 해결
 

@@ -170,7 +170,7 @@
 
 # 8. **프로젝트 실행 및 확인방법**
 
-| **접속 및 실행방법** | **웹 대시보드 (24시간):** [GitHub Pages 배포 후 URL 입력] (정적 페이지, 서버 없음, 설치·로그인·Codex 인증 불필요). **Streamlit 버전 (선택):** [배포 후 URL 입력]. 배포 절차는 `DASHBOARD_DEPLOYMENT.md`. **오프라인 대시보드:** `docs/submission/dashboard.html`을 브라우저로 연다 (설치·서버·네트워크 불필요, 모델 호출 없음). **공개 자료 검증:** 저장소 루트에서 `$env:PYTHONPATH = "src;."` 후 `python -m analysis.submission_bundle verify-public` (Python 3.11+, 추가 패키지 없음). **자동 테스트:** `python -m pytest tests -q -p no:cacheprovider` (pytest, networkx 필요). 상세: `docs/submission/JUDGE_GUIDE.md` |
+| **접속 및 실행방법** | **웹 대시보드 (24시간):** https://drews31415.github.io/CodexBench/dashboard/ (정적 페이지, 서버 없음, 설치·로그인·Codex 인증 불필요). **Streamlit 버전 (선택):** 공개 URL을 기입하지 않았다 — 기본 링크는 GitHub Pages다. 배포 절차는 `DASHBOARD_DEPLOYMENT.md`. **오프라인 대시보드:** `docs/submission/dashboard.html`을 브라우저로 연다 (설치·서버·네트워크 불필요, 모델 호출 없음). **공개 자료 검증:** 저장소 루트에서 `$env:PYTHONPATH = "src;."` 후 `python -m analysis.submission_bundle verify-public` (Python 3.11+, 추가 패키지 없음). **자동 테스트:** `python -m pytest tests -q -p no:cacheprovider` (pytest, networkx 필요). 상세: `docs/submission/JUDGE_GUIDE.md` |
 | ------------- | ---- |
 | **테스트 계정**    | 없음. 대시보드와 검증에는 계정이 필요 없다. 실제 Codex 재실행에는 실행자 본인의 ChatGPT 로그인이 필요하며, 제출물에 포함하지 않는다 |
 | **주요 확인기능**   | 대시보드 7개 화면(개요·조건 비교·실행 추적·그래프 탐색·컨텍스트·복구 Replay·실험 감사), 공개 자료로 분석 바이트 재계산, 정책 격리·parity 테스트, 증빙 목록 `docs/submission/EVIDENCE_PACK.md` |

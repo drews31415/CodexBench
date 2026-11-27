@@ -64,4 +64,4 @@
 2. `submission.md` §7의 최종 발표 전 계획: 실제 가용 일정과 우선순위 확인.
 3. 대외 공개 범위: 대시보드·데이터 묶음에 과제 파일 경로와 공개 검사 ID가 들어 있다. 제출처 공개 정책에 맞는지 확인.
 4. 커밋과 푸시: 이번 변경은 커밋하지 않았다. 검토 후 직접 커밋하거나 요청한다.
-5. 웹 배포: GitHub 저장소 생성·연결, Streamlit Community Cloud 앱 생성(Main file path `dashboard/streamlit_app.py`, Python 3.12), 공개 설정, 배포 URL을 `submission.md` §8·`JUDGE_GUIDE.md` §0·`README.md`의 `[GitHub Pages 배포 후 URL 입력]`(필수)과 `[배포 후 URL 입력]`(Streamlit, 선택) 자리에 기입.
+5. 웹 배포: GitHub Pages는 배포됨(2026-11-28 확인, https://drews31415.github.io/CodexBench/dashboard/, 링크 기입 완료). 남은 선택 항목 — 대시보드 개선본(2026-11-28) 푸시 승인, Streamlit Community Cloud 배포 여부 결정. 원래 항목: GitHub 저장소 생성·연결, Streamlit Community Cloud 앱 생성(Main file path `dashboard/streamlit_app.py`, Python 3.12), 공개 설정, 배포 URL을 `submission.md` §8·`JUDGE_GUIDE.md` §0·`README.md`의 `[GitHub Pages 배포 후 URL 입력]`(필수)과 `[배포 후 URL 입력]`(Streamlit, 선택) 자리에 기입.

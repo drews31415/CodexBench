@@ -1,4 +1,5 @@
-"""Static web dashboard for GitHub Pages, built only from the versioned public store (public_data/).
+"""Static web dashboard for GitHub Pages, built only from the versioned public store (public_data/), including the
+re-extracted Repository Graphs in public_data/repository_graphs/ (python -m analysis.repository_graphs build).
 
 No server, so it never sleeps; no network requests (CSP default-src 'none'); no model calls. The exporter
 (``analysis.public_export``) rebuilds it after every export or release, so the page cannot drift from the store.
@@ -17,6 +18,7 @@ import json
 import sys
 from pathlib import Path
 
+from analysis import repository_graphs
 from analysis import submission_bundle as sb
 
 CHECKOUT = sb.CHECKOUT
@@ -75,6 +77,13 @@ def site_payload(root: Path = CHECKOUT) -> tuple[dict, dict]:
     releases = {r["release_id"]: _json(store / "releases" / f"{r['release_id']}.json") for r in catalog["releases"]}
     data = {"schema_version": sb.SCHEMA_VERSION, "kind": "site", "catalog": catalog, "experiments": experiments,
             "manifests": manifests, "synthetic": synthetic, "releases": releases}
+    # Re-extracted Repository Graphs (current checkout, not run-time records); optional, integrity-checked.
+    try:
+        graphs = repository_graphs.load(root)
+    except repository_graphs.GraphExportError as error:
+        raise SiteError(str(error)) from error
+    if graphs is not None:
+        data["repository_graphs"] = graphs
     sb.assert_public(data)
     return data, figures
 
@@ -86,8 +95,9 @@ def render(root: Path = CHECKOUT) -> dict[Path, bytes]:
     page = ((dashboard / "template.html").read_text(encoding="utf-8")
             .replace("{{STYLE}}", (dashboard / "style.css").read_text(encoding="utf-8").strip())
             .replace("{{APP}}", (dashboard / "app.js").read_text(encoding="utf-8").strip())
-            .replace("{{TITLE}}", "실험 결과 대시보드")
+            .replace("{{TITLE}}", "연구 대시보드")
             .replace("{{SUBTITLE}}", "버전별 공개 데이터(public_data)에서 생성한 정적 페이지 · 서버 없음")
+            .replace("{{BUNDLE_SHA256_SHORT}}", sb.sha256(data_bytes)[:12])
             .replace("{{BUNDLE_SHA256}}", sb.sha256(data_bytes))
             .replace("{{FIGURES}}", sb._embed(sb.canonical(figures)))
             .replace("{{DATA}}", sb._embed(data_bytes)))

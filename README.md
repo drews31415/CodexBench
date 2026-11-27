@@ -26,7 +26,7 @@
 >
 > Main 평가 과제는 사람 동료 리뷰(BQ14)를 받지 않았다. 사전 등록한 수정 프로토콜 AMD-01(DL-031)에 따라 독립 AI 리뷰와 객관적 검사(대안 구현·불완전 수정 검출·반복·격리)를 통과한 과제만 편입했다. 승인은 1인이 RH·GR·CE를 겸임해 수행했다. 규모는 Emergency(최대 8과제 × A–E × 1회)이며 모든 결과는 탐색적이다.
 
-> **제출 자료 (심사용):** [제출서](submission.md) · 웹 대시보드 [GitHub Pages 배포 후 URL 입력] (정적, 24시간 · [배포](DASHBOARD_DEPLOYMENT.md) · [데이터 갱신](DASHBOARD_UPDATE_GUIDE.md)) · [오프라인 대시보드](docs/submission/dashboard.html)(브라우저로 열기, 설치·네트워크 불필요) · [증빙 자료](docs/submission/EVIDENCE_PACK.md) · [실행·확인 가이드](docs/submission/JUDGE_GUIDE.md) · [제출 점검표](SUBMISSION_CHECKLIST.md). 공개 자료만으로 분석을 다시 계산하려면 `python -m analysis.submission_bundle verify-public`을 실행한다(`PYTHONPATH=src;.`).
+> **제출 자료 (심사용):** [제출서](submission.md) · 웹 대시보드 https://drews31415.github.io/CodexBench/dashboard/ (정적, 24시간 · [배포](DASHBOARD_DEPLOYMENT.md) · [데이터 갱신](DASHBOARD_UPDATE_GUIDE.md)) · [오프라인 대시보드](docs/submission/dashboard.html)(브라우저로 열기, 설치·네트워크 불필요) · [증빙 자료](docs/submission/EVIDENCE_PACK.md) · [실행·확인 가이드](docs/submission/JUDGE_GUIDE.md) · [제출 점검표](SUBMISSION_CHECKLIST.md). 공개 자료만으로 분석을 다시 계산하려면 `python -m analysis.submission_bundle verify-public`을 실행한다(`PYTHONPATH=src;.`).
 
 [프로젝트 소개](#프로젝트-소개) · [아키텍처](#아키텍처) · [사용-계획](#사용-계획) · [실험-설계](#실험-설계) · [개발-및-기여](#개발-및-기여) · [문서-인덱스](#문서-인덱스)
 

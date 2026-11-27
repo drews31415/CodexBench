@@ -35,6 +35,7 @@ OUTPUT = Path("docs/submission")
 BUNDLE_NAME = "data/aah-public-bundle.json"
 RECORD_NAME = "data/verification-record.json"
 DASHBOARD_NAME = "dashboard.html"
+FROZEN_DASHBOARD = Path("analysis/dashboard/submission-2026-11-27")
 SCHEMA_VERSION = "1.0"
 BUNDLE_ID = "aah-submission-public-v1"
 CONDITIONS = ("A", "B", "C", "D", "E")
@@ -625,7 +626,9 @@ def render_outputs(root: Path = CHECKOUT) -> dict[str, bytes]:
     figures = submission_figures.render_all(bundle)
     for name, svg in figures.items():
         outputs[f"figures/{name}"] = svg.encode("utf-8")
-    dashboard = root / "analysis/dashboard"
+    # The submission snapshot keeps the dashboard sources frozen at submission time; the GitHub Pages dashboard
+    # (analysis.static_site) evolves from analysis/dashboard/ without changing docs/submission/dashboard.html.
+    dashboard = root / FROZEN_DASHBOARD
     template = (dashboard / "template.html").read_text(encoding="utf-8")
     page = (template.replace("{{STYLE}}", (dashboard / "style.css").read_text(encoding="utf-8").strip())
             .replace("{{APP}}", (dashboard / "app.js").read_text(encoding="utf-8").strip())

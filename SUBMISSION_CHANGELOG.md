@@ -86,6 +86,24 @@ Streamlit Community Cloud 앱은 12시간 방문이 없으면 잠들기 때문�
 
 정리 중 찾아 고친 문제: 정적 대시보드가 토큰 구간을 `[-6,515, 20,406]`(ASCII 마이너스, + 기호 없음)으로 표시해 문서의 `[−6,515, +20,406]`과 달랐다. 이 표기는 1차 정적 대시보드부터 있었고, 부호 표기를 문서와 같게 고쳤다.
 
+## 4차 정리: 웹 대시보드 고도화 (2026-11-28)
+
+처음 보는 심사위원이 문제의식·Codex 활용·핵심 기술·결과와 한계를 짧은 시간에 이해하고 증거로 이동하도록 GitHub Pages 대시보드를 고쳤다. 모델 호출 0회. 연구 정책·동결 코드(`MAIN_FREEZE_REPRODUCED` 유지)·실험 결과·제출 고정본(`docs/submission/`, `SUBMISSION_BUNDLE_REPRODUCED` 유지)은 바꾸지 않았다. 커밋·푸시는 하지 않았다. 상세 감사·대표 사례 선정 근거·개선 과제는 [DASHBOARD_REWORK_2026-11-28.md](docs/project/DASHBOARD_REWORK_2026-11-28.md).
+
+| 파일 | 내용 |
+| --- | --- |
+| `analysis/dashboard/app.js`, `style.css`, `template.html` | 개요 재구성(소개·역할·문제의식·핵심 지표·아키텍처·4개 기술·결과와 한계·빠른 탐색 6개와 대표 사례 자동 선택), 조건 설계·2×2·막대·forest plot, 과제별 Repository Graph와 상호작용 그래프(확대·이동·필터·선택·경로 강조), 8단계 Replay(재생·일시정지·처음부터, 같은 과제 비교), DCC 파이프라인·점수 구성, 감사 화면 데이터 기준·전체 해시 복사, 화면 모드 전환, 키보드·모바일 개선. KST 날짜 변환, 뒤로 가기, 잘못된 주소 안내 결함 수정 |
+| `analysis/dashboard/submission-2026-11-27/` | 제출 시점 화면 원본의 고정 사본 (`docs/submission/dashboard.html`은 이것으로만 생성) |
+| `analysis/submission_bundle.py` | 제출 대시보드를 고정 사본에서 만들도록 경로만 변경 (`FROZEN_DASHBOARD`). 출력 바이트 동일 |
+| `analysis/repository_graphs.py`, `public_data/repository_graphs/` | 8개 Main 과제 Repository Graph를 공개 과제 원본에서 기존 빌더로 재추출 (`build`·`check`) |
+| `analysis/static_site.py` | 재추출 그래프를 무결성 확인 후 내장, 짧은 해시 표시 |
+| `docs/dashboard/index.html` | 다시 생성 |
+| `tests/integration/test_static_site.py`, `dashboard_render.js`, `dashboard_browser.js` | 재추출 그래프 재현·변조 거부, 제출 고정 원본 유지, 새 화면·잘못된 주소·KST 렌더 검사, 실제 Chrome 검사(데스크톱·모바일 × 라이트·다크, 넘침·겹침·CSP·네트워크·콘솔, 상호작용) |
+| `README.md`, `submission.md`, `docs/submission/JUDGE_GUIDE.md`, `SUBMISSION_CHECKLIST.md` | 배포 URL 기입, 웹 대시보드 5분 경로 |
+| `DASHBOARD_DEPLOYMENT.md`, `DASHBOARD_UPDATE_GUIDE.md` | 배포 상태(2026-11-28 배포본 = 커밋 `84b839b`), 재추출 그래프 단계, 고정 원본 규칙 |
+
+검증 (2026-11-28, Windows 11, Python 3.12.10, Node 24, Chrome): `python -m pytest tests -q -p no:cacheprovider` → 303 passed, 5 skipped (Streamlit 미설치 환경의 Streamlit 화면 테스트; 작업 전 기준 298 passed, 5 skipped). 대시보드 원본을 마지막으로 고친 뒤 `test_static_site.py`·`test_submission_bundle.py`·`test_public_export.py` 34 passed(실제 브라우저 검사 포함). `REPOSITORY_GRAPHS_REPRODUCED`, `STATIC_SITE_REPRODUCED`, `PUBLIC_STORE_VERIFIED`, `SUBMISSION_PUBLIC_VERIFIED`, `SUBMISSION_BUNDLE_REPRODUCED`, `MAIN_FREEZE_REPRODUCED 5ef565bd…`. release의 검증 기록(`verification-record.json`, 2026-11-27)은 고정본이라 다시 만들지 않았다.
+
 ## 검증
 
 검증 결과는 [SUBMISSION_CHECKLIST.md](SUBMISSION_CHECKLIST.md)의 SUB14·SUB15와 `docs/submission/data/verification-record.json`에 기록했다.

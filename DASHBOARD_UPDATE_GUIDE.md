@@ -60,6 +60,7 @@ results/ (로컬, 제한)  ──python -m analysis.public_export export──�
    ```powershell
    python -m analysis.public_export verify   # 해시·개인정보·분석 재계산·release 고정·catalog
    python -m analysis.public_export check    # results/에서 다시 내보내 저장본과 대조
+   python -m analysis.repository_graphs check   # 과제별 Repository Graph가 공개 과제 원본과 일치하는지 (과제를 추가했다면 build)
    python -m analysis.static_site check      # 정적 페이지가 public_data/와 일치하는지 (export·release가 자동으로 다시 만든다)
    python -m pytest tests/integration/test_public_export.py tests/integration/test_dashboard_app.py -q
    ```
@@ -76,6 +77,7 @@ public_data/
     run_status.csv, metric_summary.csv, paired_contrasts.csv, analysis_sets.json, analysis.json   # 동결 분석 산출물 (분석 완료 시)
   synthetic/<suite>/export.json, MANIFEST.json   # 합성 검증 (라이브 아님)
   releases/<release_id>.json           # 고정된 실험 data_sha256, 주 실험, 생성 시각, 검증 기록
+  repository_graphs/MANIFEST.json, <task>.json   # 과제별 Repository Graph (공개 과제 원본에서 재추출, 실험 시점 기록 아님)
 ```
 
 - `data_sha256`은 상태 필드를 뺀 데이터와 분석 파일의 해시다. release는 이 값을 고정하므로, 나중에 실험이 무효로 바뀌어도 release 화면에는 현재 상태(무효)가 정직하게 표시된다.
@@ -90,3 +92,7 @@ public_data/
 | 확정 데이터에 오류가 발견됨 | 기존 데이터는 그대로 두고 등록부 상태를 `INVALID_*`로 바꾼 뒤 `export`(상태 이력에 남음). 수정 실험은 새 실험 ID로 실행 |
 | 분석 디렉터리가 여러 개 | 등록부 `analysis_dir`로 지정한다. 지정이 없고 후보가 여럿이면 지표를 공개하지 않는 `ANALYSIS_PENDING`으로 두고 경고 `ANALYSIS_AMBIGUOUS_SET_ANALYSIS_DIR_IN_REGISTRY`를 남긴다 |
 | 데이터 무결성 오류 화면 | `export.json`을 손으로 고치지 말고 `export`로 다시 만든다 |
+
+## 6. 화면 원본과 제출 고정본
+
+웹 대시보드 화면은 `analysis/dashboard/`(template·app·style)에서 만든다. 제출 시점 오프라인 대시보드(`docs/submission/dashboard.html`)는 `analysis/dashboard/submission-2026-11-27/`의 고정 사본으로만 만들어진다(`submission_bundle.FROZEN_DASHBOARD`). 웹 화면을 고친 뒤에는 `python -m analysis.static_site build`만 다시 실행한다. 고정 사본은 고치지 않는다 — 고치면 `submission_bundle check`가 실패한다.
