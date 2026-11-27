@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0",
+  "experiment_id": "s5-dev-pilot-20261126",
+  "approved_draft_sha256": "faf5d934715a04eaa1e299b32163defd81b07e707d4e1380975d4eed6014941c",
+  "approval_source": "User confirmed the previously proposed Pilot scope in the project conversation on 2026-11-26",
+  "profile": "existing-chatgpt-subscription",
+  "max_extra_payment_krw": 0,
+  "max_initial_turns": 25,
+  "max_recovery_turns": 40,
+  "max_total_turns": 65
+}

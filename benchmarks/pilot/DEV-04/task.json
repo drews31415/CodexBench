@@ -1,0 +1,7 @@
+{
+  "schema_version": "1.0",
+  "task_id": "DEV-04",
+  "task": "count_by_status(records, statuses)는 요청한 모든 상태가 키인 딕셔너리를 반환해야 한다. 어떤 상태의 레코드가 없으면 0으로 채우고, 요청하지 않은 상태는 결과에서 제외한다. records와 statuses는 문자열 목록이며 statuses의 값은 서로 다르다.",
+  "mandatory_text": "module.py만 수정하고 count_by_status(records, statuses)의 공개 인터페이스를 유지한다.",
+  "approved_check_ids": ["DEV-04-P-FUNC", "DEV-04-P-REG"]
+}

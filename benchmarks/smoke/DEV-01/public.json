@@ -1,0 +1,4 @@
+{
+  "P-FUNC": [["tab-edges", ["\talpha\t"], "alpha"]],
+  "P-REG": [["inner-spaces", ["  a  b  "], "a  b"]]
+}

@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "task_id": "AAH-D04",
+  "repo_id": "R-SCHED",
+  "task_family_id": "schedule-rehydrate-due-tick",
+  "doc_state": "NORMAL",
+  "task": "dump_queue(queue)가 남긴 유효한 레코드를 restore_queue(records, current_tick)가 읽어 작업 큐를 복원한다. 생성 때 저장된 due_tick을 그대로 유지하고, 이미 지나간 작업도 현재 틱에 맞춰 수정하지 않는다. 작업 ID가 서로 다르다는 전제에서 큐는 due_tick·작업 ID 순으로 반환한다.",
+  "mandatory_text": "공개 함수의 이름과 시그니처를 유지하세요. restore.py만 수정하세요. 공개 검사 파일을 변경하지 마세요.",
+  "allowed_change_paths": [
+    "restore.py"
+  ],
+  "approved_check_ids": [
+    "AAH-D04-P-FUNC",
+    "AAH-D04-P-REG"
+  ]
+}

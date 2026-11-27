@@ -1,0 +1,140 @@
+{
+  "amendment": "AMD-01",
+  "amendment_sha256": "8e9020f8caf61cb99d115aa70b63540023db97c2ca23f1a13ef214568e951f73",
+  "included": [
+    "AAH-C02",
+    "AAH-C03",
+    "AAH-D02",
+    "AAH-D04",
+    "AAH-R03",
+    "AAH-R04",
+    "AAH-S02",
+    "AAH-S03"
+  ],
+  "inputs": {
+    "before_snapshot_sha256": "ac56c5eb638e9d5ea0cdf5cb039370a83e16bc51dd38092aa2d3df00e67e9288",
+    "curator_report_sha256": "4fb0c7f50d43ac2976b858aa01ab344621031e6a3f30e4ed49b8c8adb3a51539",
+    "dev_report_sha256": "2a4ff8d4a84160d49bdbdfa502c7bce45f12e89eb9364b253c065cbadd9ae86f",
+    "prior_rounds": [
+      {
+        "curator_report_sha256": "14cf55fa6b793705fc99524933952b394f4ac42234dd11180d2c47b4c4429ad6",
+        "review_summary_sha256": "1f8a5e8d0812540a48c4a645207de35569501820c29b96bda65556ec3cf298d0"
+      },
+      {
+        "curator_report_sha256": "53a2c9840f1d10f4ae9ceff7b8e7a61f0adb7da0fa7f8b2aa288a14457b25446",
+        "review_summary_sha256": "5d1a53f17b5de96a39ebf3b4637b7690b5f656880b67614a414cfe3376791c28"
+      }
+    ],
+    "review_summary_sha256": "0fec83c529905f15227b9281c709158c2dd0107edd93457d1045c887a202db37"
+  },
+  "min_tasks": 5,
+  "round": 3,
+  "schema_version": "1.0",
+  "status": "READY",
+  "tasks": {
+    "AAH-C02": {
+      "access_record": "results/g2-preparation/amd01/access-AAH-C02-20261127-041925/access.json",
+      "access_record_sha256": "c9184f95479a1ccc4cf6b864d75089ff7de5428c78b2d96de09663f1f23230dd",
+      "curator_manifest_sha256": "7ab31307a44863ecf72e5bd8666a662d82bcc188e24c8648f6dc889c3bcfb0ff",
+      "fix_evidence_id": null,
+      "fix_round": null,
+      "included": true,
+      "partials_detected": "1/3",
+      "reasons": [],
+      "review_evidence_id": "f2bf78486b69f59cc52c4b7e79d69f639caf11877ff3802cd0d0a2fce0bdf482",
+      "reviewer_id": "ai-review:claude-opus-5-5",
+      "suite_fixed": false
+    },
+    "AAH-C03": {
+      "access_record": "results/g2-preparation/amd01/access-AAH-C03-20261127-041925/access.json",
+      "access_record_sha256": "61552a5127fbe34c08ec45f076287686dce3fb905255c1f5ac0217bcb8c57a54",
+      "curator_manifest_sha256": "b9b4095742f6728386b1a20207cdbe8caf8746a102b546921c273e1c1d67b40a",
+      "fix_evidence_id": "8b8dced8a2646aa1adb3e10d01475136bc138998cfabd81e19532c7fdf677503",
+      "fix_round": 3,
+      "included": true,
+      "partials_detected": "2/3",
+      "reasons": [],
+      "review_evidence_id": "ac1d54c89e2bd42784980b0e97f1b53b4eed514aad661f2d1fbb8397f1c8c013",
+      "reviewer_id": "ai-review:claude-opus-5-5",
+      "suite_fixed": true
+    },
+    "AAH-D02": {
+      "access_record": "results/g2-preparation/amd01/access-AAH-D02-20261127-041925/access.json",
+      "access_record_sha256": "034e1e81902b3d94036e93f6582196e7508357b8f0c2228ff584dc349ace791e",
+      "curator_manifest_sha256": "7e7f8d7afc852c47160809752c1e45a5523412abd8a918ba4e68ec965ed8ec80",
+      "fix_evidence_id": "6b84f426a44c981ab91f13e3817384d9fbdd2222aac6fec09c6dae4388f5143b",
+      "fix_round": 3,
+      "included": true,
+      "partials_detected": "2/3",
+      "reasons": [],
+      "review_evidence_id": "8ed795b47f1366461616788daf06082ca878838b52ccf189eece549ffa55534d",
+      "reviewer_id": "ai-review:claude-opus-5-5",
+      "suite_fixed": true
+    },
+    "AAH-D04": {
+      "access_record": "results/g2-preparation/amd01/access-AAH-D04-20261127-041925/access.json",
+      "access_record_sha256": "def67ab928a274521d33d147d28ef303cc935f56737b4bb17f99c0bcd73dcced",
+      "curator_manifest_sha256": "dd65867c0167f548eea81e29cb2595d14b438f995424544888ad9b6a4a1a71be",
+      "fix_evidence_id": "b51f0866df8d9396061b29caab79f0cabc22fe6dfc0b65189cac54901dd7bd4c",
+      "fix_round": 3,
+      "included": true,
+      "partials_detected": "2/3",
+      "reasons": [],
+      "review_evidence_id": "928c51287988740560ea4d77f175b1ad7ef59bdd5c3a4640b778ed1be3f11609",
+      "reviewer_id": "ai-review:claude-opus-5-5",
+      "suite_fixed": true
+    },
+    "AAH-R03": {
+      "access_record": "results/g2-preparation/amd01/access-AAH-R03-20261127-041925/access.json",
+      "access_record_sha256": "73df660240fe7e0b7902adb0555131ab13858a5e59f3723a72f4d2ec4967922b",
+      "curator_manifest_sha256": "2c631b26b111dca82ced438eac9618dd5a97e546bba32a76a9db553b5d346502",
+      "fix_evidence_id": null,
+      "fix_round": null,
+      "included": true,
+      "partials_detected": "2/3",
+      "reasons": [],
+      "review_evidence_id": "35e4f3dc5b7e9c87c4fa0573d18c6e317e0b430b684b6e6c5ddd6f7b333f78f6",
+      "reviewer_id": "ai-review:claude-opus-5-5",
+      "suite_fixed": false
+    },
+    "AAH-R04": {
+      "access_record": "results/g2-preparation/amd01/access-AAH-R04-20261127-041925/access.json",
+      "access_record_sha256": "de17b16bc48b792e831b2f155da1da4c4e056f05f6e8b710d580a5e888a7e06c",
+      "curator_manifest_sha256": "3b988b3b0a5eedf2ff89ea0bb7505c2906bbfc96c42cde82f87e7780e8e2fe35",
+      "fix_evidence_id": "8cfff813ae77c9702fc8213c7657dc4d3f94d774e8a122443cb674900ef2361a",
+      "fix_round": 3,
+      "included": true,
+      "partials_detected": "2/3",
+      "reasons": [],
+      "review_evidence_id": "2c98165c7ca8f1d658967cdf1e9e038741464dc4bc954aea22396e6e1c13213e",
+      "reviewer_id": "ai-review:claude-opus-5-5",
+      "suite_fixed": true
+    },
+    "AAH-S02": {
+      "access_record": "results/g2-preparation/amd01/access-AAH-S02-20261127-041925/access.json",
+      "access_record_sha256": "1c9c1d0f2ec5baef13e8816b3fd908f7f649cbfdad0a5ab6234e9f89dad9ebe2",
+      "curator_manifest_sha256": "a412644b0bdb717e9c54b3b3cdb3dff343fc0ade673bd35ce11af09c762a43f5",
+      "fix_evidence_id": "e5fd0828bcf880295bc349918d93da3df359bd06b5a42d25dc54f83c6acfb3ab",
+      "fix_round": 3,
+      "included": true,
+      "partials_detected": "3/3",
+      "reasons": [],
+      "review_evidence_id": "1107c341b573b5e49a26769633488a6d7b4b8b661b48128d81007d68ff4fac4a",
+      "reviewer_id": "ai-review:claude-opus-5-5",
+      "suite_fixed": true
+    },
+    "AAH-S03": {
+      "access_record": "results/g2-preparation/amd01/access-AAH-S03-20261127-041925/access.json",
+      "access_record_sha256": "88106c28a2a4e7620f27e9b4123948c4416f2e659b02cc6e85afd261a43fcf02",
+      "curator_manifest_sha256": "1107e803da84aacd43481276869ebd646eb4d85a323e9448d786dccbd7a28ad5",
+      "fix_evidence_id": null,
+      "fix_round": null,
+      "included": true,
+      "partials_detected": "3/3",
+      "reasons": [],
+      "review_evidence_id": "79ba49cf81a86d7df5cfefa749f548e8485172f40aad76a816c7f57270678e4d",
+      "reviewer_id": "ai-review:claude-opus-5-5",
+      "suite_fixed": false
+    }
+  }
+}

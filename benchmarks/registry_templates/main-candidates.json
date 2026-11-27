@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0",
+  "candidates": [
+    {"candidate_id":"AAH-S01","source":"OWN","repo_id":"R-AUTH","primary_type":"SINGLE","status":"DRAFT","review":null},
+    {"candidate_id":"AAH-S02","source":"OWN","repo_id":"R-ORDER","primary_type":"SINGLE","status":"DRAFT","review":null},
+    {"candidate_id":"AAH-S03","source":"OWN","repo_id":"R-INGEST","primary_type":"SINGLE","status":"DRAFT","review":null},
+    {"candidate_id":"AAH-S04","source":"OWN","repo_id":"R-SCHED","primary_type":"SINGLE","status":"DRAFT","review":null},
+    {"candidate_id":"PUB-S01","source":"PUBLIC","repo_id":null,"primary_type":"SINGLE","status":"DRAFT","review":null},
+    {"candidate_id":"PUB-S02","source":"PUBLIC","repo_id":null,"primary_type":"SINGLE","status":"DRAFT","review":null},
+    {"candidate_id":"AAH-D01","source":"OWN","repo_id":"R-AUTH","primary_type":"DEPENDENCY","status":"DRAFT","review":null},
+    {"candidate_id":"AAH-D02","source":"OWN","repo_id":"R-ORDER","primary_type":"DEPENDENCY","status":"DRAFT","review":null},
+    {"candidate_id":"AAH-D03","source":"OWN","repo_id":"R-INGEST","primary_type":"DEPENDENCY","status":"DRAFT","review":null},
+    {"candidate_id":"AAH-D04","source":"OWN","repo_id":"R-SCHED","primary_type":"DEPENDENCY","status":"DRAFT","review":null},
+    {"candidate_id":"PUB-D01","source":"PUBLIC","repo_id":null,"primary_type":"DEPENDENCY","status":"DRAFT","review":null},
+    {"candidate_id":"PUB-D02","source":"PUBLIC","repo_id":null,"primary_type":"DEPENDENCY","status":"DRAFT","review":null},
+    {"candidate_id":"AAH-R01","source":"OWN","repo_id":"R-AUTH","primary_type":"REGRESSION","status":"DRAFT","review":null},
+    {"candidate_id":"AAH-R02","source":"OWN","repo_id":"R-ORDER","primary_type":"REGRESSION","status":"DRAFT","review":null},
+    {"candidate_id":"AAH-R03","source":"OWN","repo_id":"R-INGEST","primary_type":"REGRESSION","status":"DRAFT","review":null},
+    {"candidate_id":"AAH-R04","source":"OWN","repo_id":"R-SCHED","primary_type":"REGRESSION","status":"DRAFT","review":null},
+    {"candidate_id":"PUB-R01","source":"PUBLIC","repo_id":null,"primary_type":"REGRESSION","status":"DRAFT","review":null},
+    {"candidate_id":"PUB-R02","source":"PUBLIC","repo_id":null,"primary_type":"REGRESSION","status":"DRAFT","review":null},
+    {"candidate_id":"AAH-C01","source":"OWN","repo_id":"R-AUTH","primary_type":"COMPOSITE","status":"DRAFT","review":null},
+    {"candidate_id":"AAH-C02","source":"OWN","repo_id":"R-ORDER","primary_type":"COMPOSITE","status":"DRAFT","review":null},
+    {"candidate_id":"AAH-C03","source":"OWN","repo_id":"R-INGEST","primary_type":"COMPOSITE","status":"DRAFT","review":null},
+    {"candidate_id":"AAH-C04","source":"OWN","repo_id":"R-SCHED","primary_type":"COMPOSITE","status":"DRAFT","review":null},
+    {"candidate_id":"PUB-C01","source":"PUBLIC","repo_id":null,"primary_type":"COMPOSITE","status":"DRAFT","review":null},
+    {"candidate_id":"PUB-C02","source":"PUBLIC","repo_id":null,"primary_type":"COMPOSITE","status":"DRAFT","review":null}
+  ]
+}

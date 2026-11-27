@@ -1,0 +1,7 @@
+{
+  "schema_version": "1.0",
+  "task_id": "DEV-02",
+  "task": "is_live(now, expires_at)는 정수 시각에서 만료 시각 직전까지만 참을 반환해야 한다. expires_at=None이면 항상 참이다.",
+  "mandatory_text": "module.py만 수정하고 is_live(now, expires_at)의 공개 인터페이스를 유지한다.",
+  "approved_check_ids": ["DEV-02-P-FUNC", "DEV-02-P-REG"]
+}

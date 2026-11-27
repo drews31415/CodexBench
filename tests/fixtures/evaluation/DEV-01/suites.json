@@ -1,0 +1,4 @@
+{
+  "functional": [["unicode-edges", ["\u2003Hello\n"], "Hello"], ["blank", ["\t\n"], ""]],
+  "regression": [["punctuation", [" Open-A.I.   Lab "], "Open-A.I.   Lab"], ["empty", [""], ""]]
+}

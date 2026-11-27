@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "task_id": "AAH-S03",
+  "repo_id": "R-INGEST",
+  "task_family_id": "ingest-null-versus-zero-csv",
+  "doc_state": "STALE",
+  "task": "load_rows(text)는 id,score 열이 있는 CSV를 받아 입력 순서의 딕셔너리 목록을 반환한다. score가 정확히 빈 문자열이면 None, 값이 있으면 int로 저장한다. 문자 0은 정수 0으로 보존한다. id는 원문 문자열이며 잘못된 정수에는 ValueError를 발생시킨다.",
+  "mandatory_text": "공개 함수의 이름과 시그니처를 유지하세요. csv_rows.py만 수정하세요. 공개 검사 파일을 변경하지 마세요.",
+  "allowed_change_paths": [
+    "csv_rows.py"
+  ],
+  "approved_check_ids": [
+    "AAH-S03-P-FUNC",
+    "AAH-S03-P-REG"
+  ]
+}

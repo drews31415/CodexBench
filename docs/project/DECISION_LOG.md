@@ -89,6 +89,7 @@
 | DL-028 | 개발 | AGENTS 기반 계약·검증 및 교차 리뷰 | DOCUMENTED | 공동 |
 | DL-029 | 발표 | 실제 로그 replay 및 정량 결과 우선 | DOCUMENTED | 공동 |
 | DL-030 | 문서 | 중앙 결정 로그와 승인·버전 추적 | PROPOSED | 공동 |
+| DL-031 | 실험 | AMD-01: BQ14를 독립 AI 리뷰로 대체한 Emergency Main | APPROVED | 공동(1인 겸임) |
 
 책임 역할은 기존 RH/GR/CE 정의를 따른다. 공동 결정은 세 역할의 검토가 필요하다. 실제 담당자는 TEAM_ROLES.md에서 확정한다.
 
@@ -354,6 +355,15 @@
 - 승인 및 검증: 팀 합의 미확인. 첫 공통 계약 변경에서 양식과 링크를 검토한다.
 - 근거: AGENTS.md §2, §9; TEAM_ROLES.md §12; IMPLEMENTATION_PLAN.md §12.3.
 
+### DL-031 — AMD-01: 사람 리뷰어 없는 Emergency Main (신규 제안)
+
+- Status: **APPROVED** / Verification: NOT_VERIFIED / Freeze: NOT_FROZEN. 제안·승인일은 2026-11-27, 변경 등급은 L2다.
+- 결정안: BQ14 동료 리뷰를 사전 고정한 독립 AI 리뷰와 객관적 검사로 대체한다. 객관적 검사는 대안 구현 2개 이상 통과, 불완전 수정 3개 중 1개 이상 검출, 반복 안정성, 과제별 MXC 격리다. 후보 8개 중 통과 과제가 5개 이상이면 Emergency 규모(과제 × A–E × 1회)로 Main을 실행한다. 모든 결과는 탐색적으로 보고한다. 대체 실행, 검정, 비열등성은 수행하지 않는다. 체크포인트는 조건부로 포함한다. 정책, 모델, 한도, 격리는 바꾸지 않는다.
+- 대안: 현상 유지(Main 미실행), 사람 리뷰어 확보(운영자가 배제), AAH-S03 1과제 탐색 실행.
+- 결과 열람: Main은 미실행이라 NO, Dev Pilot은 YES. 정책은 조정하지 않았다.
+- 승인 및 검증: 2026-11-27에 운영자가 RH·GR·CE를 겸임해 승인했다. 선택 항목은 제안값 그대로다. 수정안 파일 SHA-256은 `8e9020f8caf61cb99d115aa70b63540023db97c2ca23f1a13ef214568e951f73`이다. 이행 검증은 진행 중이다.
+- 근거와 상세: [AMD-01 수정안](AMENDMENT_01_AI_REVIEW_EMERGENCY_MAIN.md); BENCHMARK_SPEC §11.1; EXPERIMENT_DESIGN §9.2, §12; EVALUATION_PROTOCOL §11; IMPLEMENTATION_PLAN §10.1.
+
 ## 9. 기존 아키텍처 결정 추적 (AD01–AD10)
 
 | 기존 ID | 본 문서 ID | 의미 |
@@ -377,9 +387,9 @@
 
 | ID | 결정해야 할 사항 | 후보 및 판단 기준 | 주관 | 확정 시점/증거 |
 | --- | --- | --- | --- | --- |
-| OD-01 | 모델 ID, CLI/SDK, 인증, 이벤트, resume, 취소, usage | 실제 RT01–RT07의 지원 범위로 선택 | RH | S0/G0, probe 로그·버전 |
-| OD-02 | OS, sandbox, 인증·네트워크·공개/독립 평가 실행 격리 | 권한/프로세스 경계와 테스트 경로는 아키텍처 §15 및 평가 §4 기준. 실제 구성은 미검증 | RH/CE | G0 실제 실행 전, OS·runtime·평가 경계와 정리 증거 |
-| OD-03 | 전역 시간·턴·토큰·비용 상한, 추정기 및 reserve | 한시 Smoke 프로파일과 Main 동결 분리. 실제 엄격 토큰 집행을 검증하지 못하면 observe_only 검토 | RH/CE | Smoke 승인 및 Pilot/G2 정식 동결 |
+| OD-01 | 모델 ID, CLI/SDK, 인증, 이벤트, resume, 취소, usage | DEV-01에서 CLI 0.166.0, `gpt-6-luna`/`low`, ChatGPT 인증, 실제 resume·중단, 이벤트 요약 및 누적 사용량을 확인했다. 한시 Dev 설정 승인 기록 완료 | RH | S0/G0, [G0 재판정](../reports/S0_VERIFICATION.md#g0-재판정) |
+| OD-02 | OS, sandbox, 인증·네트워크·공개/독립 평가 실행 격리 | DEV-01에서 Windows MXC 실행과 Linux Docker 독립 평가, Dev 권한 경계 및 프로세스 정리를 확인하고 한시 Dev 프로파일의 공동 승인을 기록했다. | RH/CE | S0/G0, [G0 재판정](../reports/S0_VERIFICATION.md#g0-재판정) |
+| OD-03 | 전역 시간·턴·토큰·비용 상한, 추정기 및 reserve | Dev에서 시간과 턴 상한, 토큰 한도 `observe_only`, 기존 구독 범위의 CLI 1회 및 추가 지출 0원 조건을 기록했다. | RH/CE | [한시 Dev Smoke 프로파일](../reports/DEV_SMOKE_PROFILE.md), Main은 Pilot/G2에서 정식 동결 |
 | OD-04 | T1–T5 임계값, 관측 단위, 진전 대리지표 | T2 4/6 경계 포함, 개발용 사례에서 오개입 검토 | RH/GR | G2, 개발 로그·정책 hash |
 | OD-05 | 그래프 범위, 가중치, DCC 점수, BM25/토큰화 | 방법론 §15 시작값, 동일 후보 접근·비용·재현성, 허용 방향/CONTAINS 범위, 관측·진전 창, H4 근거 채점 | GR/CE | G2, 설정·테스트 |
 | OD-06 | 자체 과제 16개, 문서 분포, hidden suite | BQ 품질·대안 패치·격리 검사 | 공동 | IP25–IP29/G2, 승인 기록 |
@@ -388,7 +398,7 @@
 | OD-09 | source 중지 경계 및 세션 복제 | 복원·이력 hash, 미검증 시 모든 분기에 NEW_SESSION | RH/GR | Pilot/G2, restore test |
 | OD-10 | H1/H3 해석, 최소 유효 표본/coverage, P-R3 동률 추론, 비용·악화 지표 | 5%p, 동시구간/교집합 검정, CPS 구간 보류, MIXED 포함은 후보. 승인된 근거 없으면 탐색적으로 보고 | CE/공동 | G2 사전 분석 계획·승인 |
 | OD-11 | 인프라 대체 실행 및 비용 회계 | 기본 자동 재실행 없음; 승인된 외부 장애에 최대 1회 후보 | RH/CE | G2, 사전 분류표 |
-| OD-12 | 공개 검사 parser/timeout·선행 검사, private runner 및 upstream 판정 매핑 | Smoke 책임·경계부터 확인. Main 과제의 동일 승인 스펙·별도 판정 근거·정리 | RH/CE | Smoke 승인 및 G2 BQ/EP |
+| OD-12 | 공개 검사 parser/timeout·선행 검사, private runner 및 upstream 판정 매핑 | 승인된 DEV-01 검사·독립 평가 경계를 기록했다. Main 과제의 승인 스펙과 판정 근거는 G2 BQ/EP에서 확인한다. | RH/CE | [DEV-01 검사·평가 프로파일](../reports/DEV_SMOKE_PROFILE.md), G2 BQ/EP |
 | OD-13 | 팀원 실명, 조정자, 가용 시간, 리뷰어 | RH/GR/CE 합의, CE 과부하 조정 | 공동 | 착수, TEAM_ROLES 갱신 |
 | OD-14 | 공식 마감, 크레딧 사용 기간 및 예산 | 실제 운영 안내 확인; 기존 11/30·12/16 일정 잠정 | 공동 | 착수, 확인 자료 |
 | OD-15 | 시각화 방식 및 공개 산출물 | 정적 보고·replay 우선, 잔여 자원에 따른 UI | 공동 | G1 이후/G5 |
@@ -559,7 +569,7 @@ flowchart TD
 
 | 날짜 | DL ID | 이전/이후 상태 | 관련 IP/버전 | 변경 이유 | 제안자/승인자 | 증거 | 결과 열람 여부 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 미기입 | | | | | | | |
+| 2026-11-27 | DL-031 | PROPOSED → APPROVED | IP26/29/31, AMD-01 | 사람 리뷰어 부재로 BQ14 대체 | 개발 세션 / 운영자(RH·GR·CE 겸임) | 수정안 `8e9020f8caf6…` | Main NO, Dev Pilot YES |
 
 ### 13.2. 결정과 학습·협업 연결
 

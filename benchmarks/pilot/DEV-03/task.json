@@ -1,0 +1,7 @@
+{
+  "schema_version": "1.0",
+  "task_id": "DEV-03",
+  "task": "can_accept(config, queued)는 queued가 config의 limit보다 작을 때만 참을 반환해야 한다. limit 값으로 0 이상의 정수와 같은 값을 나타내는 ASCII 숫자 문자열을 모두 지원한다. limit 키가 없으면 기본값은 10이다. queued는 0 이상의 정수다.",
+  "mandatory_text": "module.py만 수정하고 can_accept(config, queued)의 공개 인터페이스를 유지한다.",
+  "approved_check_ids": ["DEV-03-P-FUNC", "DEV-03-P-REG"]
+}

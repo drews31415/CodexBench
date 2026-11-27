@@ -1,0 +1,160 @@
+{
+  "analysis": {
+    "config": {
+      "analysis_seed": 20261126,
+      "bootstrap": {
+        "cluster_key": "task_family_id",
+        "confidence": 0.95,
+        "interval": "percentile",
+        "iterations": 10000,
+        "min_clusters_for_interval": 2,
+        "undefined_cps_policy": "withhold_finite_interval"
+      },
+      "missing": {
+        "infrastructure_replacement_limit": null,
+        "never_impute_cost_as_zero": true
+      },
+      "optional_inference": {
+        "multiple_comparison": "holm",
+        "noninferiority_margin": null,
+        "significance_tests": null
+      },
+      "p_r3_interval": "not_approved_exploratory",
+      "primary_blocks": "complete",
+      "primary_contrasts": [
+        "P-R1",
+        "P-R3"
+      ],
+      "schema_version": "1.0",
+      "secondary_contrasts": [
+        "E-B",
+        "C-B",
+        "D-B",
+        "E-C",
+        "E-D",
+        "E-A",
+        "CTX_MAIN",
+        "GRAPH_MAIN",
+        "INTERACTION"
+      ]
+    },
+    "config_sha256": "dc44ac5828a79d80240612db66c29cc68f5ddefd09994760d6e2b829e3d05142"
+  },
+  "budget": {
+    "cleanup_reserve_ms": 15000,
+    "extra_payment_krw": 0,
+    "initial_turns_per_slot": 1,
+    "max_initial_turns": 5,
+    "max_recovery_turns": 8,
+    "max_total_turns": 13,
+    "max_transitions": 100,
+    "native_turn_ms": 105000,
+    "profile": "existing-chatgpt-subscription",
+    "recovery_turns_per_eligible_slot": 2,
+    "supplement_cap": 2048,
+    "token_limit_mode": "observe_only",
+    "wall_ms_per_run": 360000
+  },
+  "code": {
+    "code_version": "fc993aeff21208d0c0c397500f6d0f79604b7128873a86f9dcaaa3f5ee83a05c",
+    "files": 116
+  },
+  "evaluator": {
+    "curator_manifest_sha256": null,
+    "curator_profile": "main-curator-docker-v1",
+    "public_checks": {
+      "environment_sha256": "f98af066a8be966f0ee4697e87586ac91d306b8866fb72eeaff32ab92efd5acd",
+      "profile": "main-public-docker-v1",
+      "suite_sha256": {
+        "P-FUNC": "099b56c0919697bd38ec24950833a3b428516c89cdc62285f1272aae6d2a9b25",
+        "P-REG": "05c494ceb866054c9c124e4edf91e8d81947c4f7aa15c0c6dba8e66475ce413e"
+      },
+      "worker_sha256": "c7d9da9fdfba457df68e017ec4578d73c7ba3cf220fb24f4391736ce9392b231"
+    }
+  },
+  "experiment_id": "aah-s03-main-v1",
+  "freeze_id": "aah-s03-main-v1",
+  "model": {
+    "adapter": "codex_cli",
+    "model_id": "gpt-6-luna",
+    "reasoning_effort": "low",
+    "runtime_version": "0.166.0",
+    "session_mode": "SAME_SESSION"
+  },
+  "permissions": {
+    "access_record": "results/g2-preparation/main-s03-access-20261127-030416/access.json",
+    "access_record_sha256": "0c7a236bbe9a5f31555927be4df5c3a1f2d04bc2f2cee4cc11c63a343a704c41",
+    "initial_snapshot_id": {
+      "A": "cef3a2987cb5fb0f1de8d1bdc6f32ae3fc2b41b3732d36a180b1caae752c8210",
+      "B": "cef3a2987cb5fb0f1de8d1bdc6f32ae3fc2b41b3732d36a180b1caae752c8210",
+      "C": "cef3a2987cb5fb0f1de8d1bdc6f32ae3fc2b41b3732d36a180b1caae752c8210",
+      "D": "cef3a2987cb5fb0f1de8d1bdc6f32ae3fc2b41b3732d36a180b1caae752c8210",
+      "E": "cef3a2987cb5fb0f1de8d1bdc6f32ae3fc2b41b3732d36a180b1caae752c8210"
+    },
+    "mxc_profile": "aah_dev01_mxc",
+    "permission_settings_hash": {
+      "A": "de14ca4ee0a1d7a5e995808df347a370ccb1bc011a61745d506a5c258f49356d",
+      "B": "de14ca4ee0a1d7a5e995808df347a370ccb1bc011a61745d506a5c258f49356d",
+      "C": "de14ca4ee0a1d7a5e995808df347a370ccb1bc011a61745d506a5c258f49356d",
+      "D": "de14ca4ee0a1d7a5e995808df347a370ccb1bc011a61745d506a5c258f49356d",
+      "E": "de14ca4ee0a1d7a5e995808df347a370ccb1bc011a61745d506a5c258f49356d"
+    }
+  },
+  "schedule": {
+    "seed": 20261127,
+    "slots": [
+      {
+        "condition": "D",
+        "slot_id": "slot-0001"
+      },
+      {
+        "condition": "E",
+        "slot_id": "slot-0002"
+      },
+      {
+        "condition": "B",
+        "slot_id": "slot-0003"
+      },
+      {
+        "condition": "C",
+        "slot_id": "slot-0004"
+      },
+      {
+        "condition": "A",
+        "slot_id": "slot-0005"
+      }
+    ]
+  },
+  "schema_version": "1.0",
+  "scope": {
+    "conditions": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "note": "single-task Main; smaller than the Emergency plan (8 tasks), so results are exploratory",
+    "repetitions": 1,
+    "tasks": [
+      "AAH-S03"
+    ]
+  },
+  "task": {
+    "allowed_change_paths": [
+      "csv_rows.py"
+    ],
+    "approved_check_ids": [
+      "AAH-S03-P-FUNC",
+      "AAH-S03-P-REG"
+    ],
+    "base_revision": "1c3431bd3685219ad2e1fd2917e144ea1386ba0430433e620be07dbc932f25d5",
+    "doc_state": "STALE",
+    "fixed_requirements_hash": "59f799f52e900ffb15ed0d2ca2f98eeb9530e22e53aa1d7d25aee766da2578da",
+    "mandatory_hash": "b83f18909d59d2b5b9ee871555fcaf399f8adad12d8217c908461ce548e07c25",
+    "public_spec_sha256": "d6f38d5fcbf8b6a129432e0688615b1a611d54aa6d64753e0f47d4981a037ff3",
+    "repo_id": "R-INGEST",
+    "task_family_id": "ingest-null-versus-zero-csv",
+    "task_id": "AAH-S03"
+  }
+}

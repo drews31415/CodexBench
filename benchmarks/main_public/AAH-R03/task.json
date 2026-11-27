@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "task_id": "AAH-R03",
+  "repo_id": "R-INGEST",
+  "task_family_id": "ingest-date-notation-compatibility",
+  "doc_state": "NORMAL",
+  "task": "parse_day(value)는 달력 날짜의 YYYY-MM-DD 및 YYYYMMDD 형식을 지원하고 datetime.date를 반환한다. 입력은 ASCII 숫자와 필요한 하이픈으로 구성하며 달력에 없는 날짜와 지정 형식 밖의 문자열은 ValueError로 처리한다. 공백, 주차 날짜, 날짜·시간 혼합 형식은 지원하지 않는다.",
+  "mandatory_text": "공개 함수의 이름과 시그니처를 유지하세요. day_format.py만 수정하세요. 공개 검사 파일을 변경하지 마세요.",
+  "allowed_change_paths": [
+    "day_format.py"
+  ],
+  "approved_check_ids": [
+    "AAH-R03-P-FUNC",
+    "AAH-R03-P-REG"
+  ]
+}

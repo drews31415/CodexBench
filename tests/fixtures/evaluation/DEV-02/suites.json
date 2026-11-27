@@ -1,0 +1,4 @@
+{
+  "functional": [["epoch-boundary", [0, 0], false], ["negative-boundary", [-3, -3], false]],
+  "regression": [["unbounded", [-1, null], true], ["past-expiry", [3, 2], false], ["still-live", [-1, 0], true]]
+}

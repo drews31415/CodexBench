@@ -1,0 +1,7 @@
+{
+  "schema_version": "1.0",
+  "task_id": "DEV-01",
+  "task": "format_label(text)는 문자열 양끝의 유니코드 공백을 제거하고 내부 문자와 공백을 보존해야 한다.",
+  "mandatory_text": "module.py만 수정하고 format_label(text)의 공개 인터페이스를 유지한다.",
+  "approved_check_ids": ["DEV-01-P-FUNC", "DEV-01-P-REG"]
+}

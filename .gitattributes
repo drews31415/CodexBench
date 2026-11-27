@@ -1,0 +1,12 @@
+# Public Dev inputs are content-pinned and must retain their bytes on checkout.
+benchmarks/smoke/**/*.py text eol=lf
+benchmarks/smoke/**/*.json text eol=lf
+benchmarks/pilot/**/*.py text eol=lf
+benchmarks/pilot/**/*.json text eol=lf
+benchmarks/main_public/** text eol=lf
+tests/fixtures/evaluation/**/*.py text eol=lf
+tests/fixtures/evaluation/**/*.json text eol=lf
+# Hash-pinned records (freeze, approval, amendment, instructions) keep their exact bytes.
+configs/** -text
+docs/project/AMENDMENT_01_AI_REVIEW_EMERGENCY_MAIN.md -text
+docs/project/AMD01_*.md -text

@@ -1,0 +1,9 @@
+{
+  "functional": [
+    ["consecutive-errors-and-recovery", [["", "NaN", "  +8 ", "4.1", "2"]], {"values": [8, 2], "invalid_rows": [1, 2, 4]}]
+  ],
+  "regression": [
+    ["empty-file", [[]], {"values": [], "invalid_rows": []}],
+    ["valid-rows-in-order", [["-8", "0", "5"]], {"values": [-8, 0, 5], "invalid_rows": []}]
+  ]
+}

@@ -6,9 +6,21 @@
 
 잇츠 스터디 5기 · Codex 기반 AI 코딩 에이전트 구축
 
-> **Project status — Design / Pre-implementation** (2026-11-25)
+> **Project status — G0·G1 통과 · S5 Dev Pilot 25/25 평가 · G2 사전 검증** (2026-11-27)
 >
-> 연구·프로젝트 설계 문서가 준비된 상태입니다. 소프트웨어 구현, 실제 Codex 연동, 평가 데이터 구축 및 본실험은 아직 확인되지 않았습니다. 아래 기능과 CLI는 구현 목표이며 성능 향상은 검증할 가설입니다. 현재 설치 가능한 릴리스나 측정된 실험 결과는 제공하지 않습니다.
+> DEV-01에서 실제 Codex 실행과 독립 Docker 판정을 확인했습니다. Dev 런타임·격리 검증과 한시 Dev Smoke 공동 승인 확인을 기록해 G0를 통과했습니다. [G0 재판정](docs/reports/S0_VERIFICATION.md#g0-재판정)
+>
+> S1에서는 A/B 합성 실행, 조건 A의 실제 Codex 턴, 공개 보고서 조회 및 독립 Docker 판정까지 확인했습니다. 실제 DEV-01의 과제 판정은 `FAIL`입니다. [S1 재현 및 검증 범위](docs/reports/S1_VERIFICATION.md)
+>
+> S2에서는 공통 후보 수집과 동적 컨텍스트 구성기를 연결하고 조건 B/C의 합성 실행을 검증했습니다. [S2 검증 기록](docs/reports/S2_VERIFICATION.md)
+>
+> S3에서는 조건 D가 공개 검사와 코드 사이의 경로로 복구 대상을 선택하고 다음 턴에 전달하는 과정을 합성 실행으로 확인했습니다. [S3 검증 기록](docs/reports/S3_VERIFICATION.md)
+>
+> S4에서는 실제 DEV-01의 첫 턴 실패 후 E가 복구를 전달하는 과정을 확인했고, A–E 다섯 실행의 독립 Docker 판정을 검증했습니다. LT02와 LT04가 통과했습니다. 합성 체크포인트에서 B–E가 최초 턴을 반복하지 않고 분기하는 것도 확인했습니다. [S4 검증 기록](docs/reports/S4_VERIFICATION.md)
+>
+> S5 Dev Pilot은 과제 5개에서 A–E 25슬롯을 모두 실행했습니다. 독립 Docker 평가는 18건 PASS, 7건 FAIL이었고 실제 후속 복구 턴 8건을 확인했습니다. [S5 Pilot 실환경 결과](docs/reports/S5_PILOT_PREPARATION.md#pilot-실환경-결과)
+>
+> G2 검토용으로 Main 후보 8개의 공개 기준본과 기능·회귀 검사를 검증했습니다. 독립 평가와 비작성자 리뷰를 마친 Main 후보는 0개입니다. [G2 사전 검증](docs/reports/G2_PREPARATION.md)
 
 [프로젝트 소개](#프로젝트-소개) · [아키텍처](#아키텍처) · [사용-계획](#사용-계획) · [실험-설계](#실험-설계) · [개발-및-기여](#개발-및-기여) · [문서-인덱스](#문서-인덱스)
 
@@ -123,7 +135,22 @@ Harness Engineering은 전체 실행 환경, Graph Engineering은 관계 기반 
 
 ## 사용 계획
 
-> 아래 명령은 `TECHNICAL_SPEC.md` §14의 **구현 예정 CLI 계약**입니다. 아직 설치 또는 실행이 검증된 명령이 아닙니다. 실제 릴리스 이후 지원 환경과 설치 방법, 정확한 사용 예시를 이 절에 추가합니다.
+### 현재 실행 가능한 S0 명령
+
+Python 3.11 이상이 필요합니다. 저장소 루트에서 다음 PowerShell 명령을 실행합니다. 평가기 검증은 공개 Dev 두 과제의 초기 상태와 참조 상태를 모두 검사합니다. 출력은 새 경로에 저장합니다.
+
+```powershell
+$env:PYTHONPATH = (Resolve-Path src).Path
+python -m aah probe --config configs/s0-probe.json --output results/probe-01.json
+python -m benchmarks.smoke.prepare --task DEV-01 --output results/dev-01-inputs.zip
+python -m evaluation.smoke --output-dir results/dev-fixtures-01
+python -m pytest tests/unit tests/contract
+python -m pytest tests/integration tests/isolation
+```
+
+Dev 입력 ZIP에는 작업 사본, 최초 메시지 원문, 운영자용 해시 기록이 들어 있습니다. 준비 명령은 모델 호출을 시작하지 않습니다. Docker 연결 확인과 한시 실행 프로파일 초안은 [S0 검증 기록](docs/reports/S0_VERIFICATION.md#dev-01-첫-실행-준비)에 있습니다.
+
+빌드 도구(setuptools 68 이상과 wheel)가 준비된 가상환경에서는 `python -m pip install --no-index --no-build-isolation --no-deps .`로 설치할 수 있습니다. 설치 후에는 `adaptive-codex probe --config configs/s0-probe.json`을 실행합니다. 평가기는 저장소에서 별도 명령으로 실행합니다. `probe`의 종료 코드 0은 로컬 CLI 메타데이터 수집 성공을 뜻합니다. 개별 RT 항목과 G0의 상태는 보고서에서 확인합니다.
 
 ### 지원 환경 및 설치 전제 (계획)
 
@@ -132,9 +159,9 @@ Harness Engineering은 전체 실행 환경, Graph Engineering은 관계 기반 
 - 사용자 승인 공개 검사 명령과 실행 제한
 - 안전성이 검증된 격리 작업 공간 및 별도 평가 환경
 
-정확한 Python minor 버전, 의존성 lockfile, Codex 버전, 지원 OS, 인증 절차, 설치 명령은 기술 검증 이후 명시합니다. 현재 배포 패키지와 설치 절차를 확인하지 못했으므로 실제 설치 명령은 제시하지 않습니다. 저장소 URL이나 라이선스도 확정 이후 추가합니다.
+실제 모델 실행에 쓸 Python·Codex 버전, 인증·권한 프로파일과 제한 값은 Dev Smoke 승인 시 기록합니다.
 
-### 일반 사용자 모드
+### 일반 사용자 모드 (S1 이후 계획)
 
 대상 저장소와 개발 요청을 전달합니다. 기본 정책은 E이며, 설정에는 모델, 작업 공간, 공개 검사, 시간·턴·복구 횟수 및 보조 컨텍스트 제한을 명시합니다.
 
@@ -148,11 +175,10 @@ adaptive-codex run \
 
 예상 사용 흐름은 대상 저장소 선택 → 작업 요청 및 실행 제한 확인 → 격리 실행 → 조건부 실패 복구 → 최종 패치 및 보고서 검토입니다. 변경 사항의 실제 적용, 커밋 또는 푸시는 사용자 검토 후 별도로 수행합니다.
 
-### 런타임 검증 및 연구 모드
+### 연구 모드 (후속 단계 계획)
 
 ```bash
 # Planned CLI — not yet verified
-adaptive-codex probe --config configs/pilot.yaml
 adaptive-codex experiment --manifest configs/experiments/main.yaml
 adaptive-codex report --run-id <run-id> --results-root results
 ```
@@ -261,7 +287,7 @@ B–E에서 감지 조건, 복구 기회, 허용 원천 증거, 필수 지침, �
 
 ## 연구 진행 상태
 
-현재는 설계 단계입니다. 다음 표는 실제 실행 결과가 아니라 검증해야 할 결과 항목을 정의합니다.
+현재 S0 개발 검증을 진행 중입니다. 다음 표는 향후 실험에서 측정할 지표를 표시합니다.
 
 | 지표 | A | B | C | D | E |
 | --- | --- | --- | --- | --- | --- |
@@ -275,9 +301,9 @@ B–E에서 감지 조건, 복구 기회, 허용 원천 증거, 필수 지침, �
 
 | 게이트 | 승인 목표 | 현재 확인 상태 |
 | --- | --- | --- |
-| G0 | 실제 Codex 실행, runtime probe, 격리, 독립 평가 | 미검증 |
-| G1 | 통합 MVP 및 A–E 정책 격리 | 미검증 |
-| G2 | Pilot, 과제 품질 검증 및 실험 동결 | 미검증 |
+| G0 | 실제 Codex 실행, runtime probe, 격리, 독립 평가 | 통과 · [판정과 근거](docs/reports/S0_VERIFICATION.md#g0-재판정) |
+| G1 | 통합 MVP 및 A–E 정책 격리 | 통과 · [실행 및 승인 기록](docs/reports/S4_VERIFICATION.md#증거-경로-및-g1-상태) |
+| G2 | Pilot, 과제 품질 검증 및 실험 동결 | Main 공개 기준본 8개 검증 · 독립 평가, 리뷰 및 동결 대기 |
 | G3 | 본실험 및 체크포인트 기록 확보 | 미실행 |
 | G4 | 분석, 비용 회계 및 한계 검토 | 미실행 |
 | G5 | 제출 패키지, 실제 사례 replay 및 재현 안내 | 미완료 |
@@ -286,7 +312,7 @@ B–E에서 감지 조건, 복구 기회, 허용 원천 증거, 필수 지침, �
 
 ## 저장소 구조
 
-구현 예정 논리 구조입니다. 실제 코드, 설정 및 테스트가 현재 존재함을 의미하지 않습니다.
+아래는 전체 단계의 목표 구조입니다. S0에서 구현한 경로와 재현 방법은 위 사용 계획과 검증 기록에 있습니다.
 
 ```text
 adaptive-agent-harness/
@@ -356,14 +382,11 @@ adaptive-agent-harness/
 
 권장 작업 흐름은 Issue(IP ID) → 구현 계획 → 브랜치/PR → 교차 리뷰 → 관련 테스트 → 결과 및 blocker 기록입니다. 비용을 수반하는 실제 Codex 호출은 승인된 인증·격리 환경과 명시적 실행 승인을 전제로 합니다.
 
-### 테스트 (구현 예정)
+### 테스트
 
 ```bash
-# Planned test commands — tests are not yet available in this document package
-pytest tests/unit tests/contract
-pytest tests/integration tests/isolation
-# Separate approval and verified environment required:
-pytest tests/live -m live
+python -m pytest tests/unit tests/contract
+python -m pytest tests/integration tests/isolation
 ```
 
 단위·계약 테스트는 결정적인 정책 및 타입을, 통합·격리 테스트는 실행 흐름과 정보 경계를 검증합니다. live 테스트는 실제 Codex 인터페이스를 검증하며 기본 CI에서 제외합니다. 모의 실행 통과는 실제 Codex 연동 또는 성능 향상의 증거가 아닙니다.

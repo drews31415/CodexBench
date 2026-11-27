@@ -1,0 +1,4 @@
+{
+  "P-FUNC": [["missing-status", [["ready"], ["ready", "waiting"]], {"ready": 1, "waiting": 0}]],
+  "P-REG": [["counts-selected-status", [["ready", "ignored", "ready"], ["ready"]], {"ready": 2}]]
+}

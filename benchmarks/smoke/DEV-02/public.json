@@ -1,0 +1,4 @@
+{
+  "P-FUNC": [["at-expiry", [8, 8], false]],
+  "P-REG": [["before-expiry", [7, 8], true], ["no-expiry", [10, null], true]]
+}

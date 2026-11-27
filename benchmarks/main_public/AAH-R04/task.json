@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "task_id": "AAH-R04",
+  "repo_id": "R-SCHED",
+  "task_family_id": "schedule-retry-delay-priority",
+  "doc_state": "NOISY",
+  "task": "enqueue_retry(queue, job, now)에서 취소된 작업은 큐에 넣지 않고 False를 반환한다. 나머지는 재시도 지연 min(2^{failures-1}, 8) 틱을 적용한다. failures는 첫 실패부터 세는 1 이상의 정수다. queue의 항목은 (due_tick, -priority, job_id)이며 기존 정렬·높은 우선순위 동작을 유지한다.",
+  "mandatory_text": "공개 함수의 이름과 시그니처를 유지하세요. retry.py만 수정하세요. 공개 검사 파일을 변경하지 마세요.",
+  "allowed_change_paths": [
+    "retry.py"
+  ],
+  "approved_check_ids": [
+    "AAH-R04-P-FUNC",
+    "AAH-R04-P-REG"
+  ]
+}

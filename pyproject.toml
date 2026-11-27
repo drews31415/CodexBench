@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "adaptive-agent-harness"
+version = "0.1.0.dev0"
+description = "External Codex harness for reproducible coding-agent experiments"
+requires-python = ">=3.11"
+dependencies = ["networkx>=3.2,<4"]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[project.scripts]
+adaptive-codex = "aah.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["aah*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+addopts = "--strict-markers"
+markers = ["live: requires an approved provider, isolated runtime and explicit budget"]

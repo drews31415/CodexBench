@@ -1,0 +1,10 @@
+{
+  "functional": [
+    ["requested-statuses-with-no-records", [[], ["running", "complete"]], {"running": 0, "complete": 0}],
+    ["missing-and-unrequested-statuses", [["running", "other"], ["running", "complete"]], {"running": 1, "complete": 0}]
+  ],
+  "regression": [
+    ["empty-selection", [["running"], []], {}],
+    ["existing-counts", [["open", "closed", "open"], ["closed", "open"]], {"closed": 1, "open": 2}]
+  ]
+}

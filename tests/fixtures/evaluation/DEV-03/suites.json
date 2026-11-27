@@ -1,0 +1,10 @@
+{
+  "functional": [
+    ["accept-under-string-limit", [{"limit": "24"}, 18], true],
+    ["reject-at-zero-string-limit", [{"limit": "00"}, 0], false]
+  ],
+  "regression": [
+    ["integer-limit", [{"limit": 13}, 12], true],
+    ["default-limit", [{}, 9], true]
+  ]
+}

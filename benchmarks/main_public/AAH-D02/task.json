@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "task_id": "AAH-D02",
+  "repo_id": "R-ORDER",
+  "task_family_id": "order-cancel-reservation-identity",
+  "doc_state": "NORMAL",
+  "task": "cancel(orders, stock, order_id)는 활성 주문의 각 재고 예약을 해제한 후 주문을 cancelled로 기록하고 True를 반환한다. 주문과 예약은 서로 다른 식별자를 가질 수 있다. 이미 취소된 주문이면 False를 반환하고 재고를 추가하지 않으며, 모르는 주문 ID에는 KeyError를 발생시킨다.",
+  "mandatory_text": "공개 함수의 이름과 시그니처를 유지하세요. orders.py만 수정하세요. 공개 검사 파일을 변경하지 마세요.",
+  "allowed_change_paths": [
+    "orders.py"
+  ],
+  "approved_check_ids": [
+    "AAH-D02-P-FUNC",
+    "AAH-D02-P-REG"
+  ]
+}

@@ -1,0 +1,4 @@
+{
+  "P-FUNC": [["string-boundary", [{"limit": "3"}, 3], false]],
+  "P-REG": [["integer-before-limit", [{"limit": 3}, 2], true], ["default-boundary", [{}, 10], false]]
+}

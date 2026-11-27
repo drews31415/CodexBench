@@ -1,0 +1,4 @@
+{
+  "P-FUNC": [["valid-row-after-error", [["7", "invalid", "5"]], {"values": [7, 5], "invalid_rows": [2]}]],
+  "P-REG": [["valid-rows", [[" 6 ", "-3"]], {"values": [6, -3], "invalid_rows": []}]]
+}

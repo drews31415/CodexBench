@@ -1,0 +1,7 @@
+{
+  "schema_version": "1.0",
+  "task_id": "DEV-05",
+  "task": "convert_rows(lines)는 텍스트 파일에서 읽은 문자열 목록을 변환한다. Python int로 변환한 정수는 입력 순서로 values에, 변환할 수 없는 줄의 1부터 시작하는 번호는 순서대로 invalid_rows에 담아 딕셔너리로 반환한다. 오류가 난 뒤에도 다음 줄을 처리한다.",
+  "mandatory_text": "module.py만 수정하고 convert_rows(lines)의 공개 인터페이스와 두 결과 키를 유지한다.",
+  "approved_check_ids": ["DEV-05-P-FUNC", "DEV-05-P-REG"]
+}
