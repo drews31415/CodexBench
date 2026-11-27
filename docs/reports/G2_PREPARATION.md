@@ -431,6 +431,48 @@ $env:PYTHONPATH = "src;."
 python -m benchmarks.main_public.main_schedule --execute --curator-kits C:\Users\dldls\OneDrive\Code\AAH-Main-curator-kits
 ```
 
+### AMD-01 이행 5단계: 에이전트 셸 결함 수정과 v2 동결
+
+**결함.** v1 실행(`aah-main-emergency-v1`)과 Dev Pilot에서 에이전트 셸 명령이 하나도 실행되지 않았다. 원인과 분석은 [RESULTS_ANALYSIS §2.4 타당성 경고](RESULTS_ANALYSIS.md#24-main-실측-결과--aah-main-emergency-v1-amd-01-emergency-탐색적)와 EL-20261127-034에 있다. v1 동결·승인·결과는 이력으로 보존한다.
+
+**수정 (모델 호출 없는 재현으로 확인)**
+
+| 항목 | 내용 |
+| --- | --- |
+| 재현 | `codex sandbox`에 턴과 같은 `shell_environment_policy.inherit="none"`을 넣자 v1과 같은 MXC `SYSTEMROOT` 오류가 났다. 정책을 빼면 명령은 실행되지만 `USERPROFILE` 등 호스트 환경 전체가 노출됐다 |
+| 셸 환경 정책 | `inherit="all"` + `include_only=["SYSTEMROOT","WINDIR","COMSPEC","PATH","PATHEXT"]`. 명령은 실행되고 `USERPROFILE`은 보이지 않는다. [`live_dev01.SHELL_ENV_POLICY`](../../benchmarks/smoke/live_dev01.py) |
+| 검사 경로 일치 | 접근 검사의 sandbox 명령에도 같은 정책을 넣었다. 셸 환경이 다시 깨지면 BQ09·10 검사 자체가 실패한다 |
+| 실행 중 감지 | 이벤트 요약에 `command_outcomes`(완료·실행 불가·exit 0)와 `AGENT_SHELL_UNAVAILABLE`을 추가했다. Main 일정은 슬롯 기록에서 실행 불가 명령을 발견하면 그 슬롯에서 멈춘다. 같은 검사를 v1 기록 40개에 적용하면 40개 모두 걸린다(167건) |
+| 권한 설정 해시 | `de14ca4e…` → `74e24628…`. 이전 접근 기록은 새 설정과 맞지 않아 실행기가 거부한다 |
+| 테스트 | 263개 통과. 공유 셸 정책, 실행 불가 감지, 일정 중단, 접근 기록 교체 테스트를 추가했다 |
+
+**검증 (실환경)**
+
+| 검사 | 결과 | 근거 |
+| --- | --- | --- |
+| 8과제 MXC 접근 검사 (새 정책) | 8/8 BQ09·BQ10 PASS, 에이전트 턴 0회 | `results/g2-preparation/amd01-v2/access-<과제>-20261127-165535/access.json` |
+| DEV-01 라이브 스모크 1차 | PASS. 감지 기능 추가 전이라 명령 결과는 기록되지 않음 | `results/s0-verification/live-dev01-aec39183-…/report.json` |
+| DEV-01 라이브 스모크 2차 (감지 포함) | PASS. 명령 4개 완료, 실행 불가 0, exit 0 2개. 파일 편집 2회, 독립 판정 PASS | `results/s0-verification/live-dev01-3b770877-…/report.json` |
+
+스모크는 Main 과제 노출을 피하려고 Dev 과제로 2턴 실행했다.
+
+**v2 동결**
+
+| 항목 | 값 |
+| --- | --- |
+| 실험 ID | `aah-main-emergency-v2` |
+| 편입 | v1과 같은 AMD-01 3차 편입 8/8(`94a518a6…`)을 재사용한다. 과제 품질 판정은 셸 환경과 무관하다 |
+| 접근 기록 교체 | `configs/main/aah-main-emergency-v2-access.json` (`5647f19b…`). 편입 기록에 묶여 있다 |
+| 동결 manifest | `configs/main/aah-main-emergency-v2-freeze.json`, SHA-256 `5ef565bd48c3a684cbbf03c3a70687f4bda7f34e3ce5ba5649cc847895142e4a`. `--check` 재현 일치 |
+| 코드 버전 | `2401bc7f…` |
+| 범위·모델·예산 | v1과 같다. 8과제 × A–E × 1회 = 40슬롯, seed 20261127, `gpt-6-luna` low, 최대 104턴, 추가 결제 0원 |
+| 잠금 | `MAIN_FREEZE_NOT_LOCKED EXECUTION_APPROVAL_MISSING`. 새 실행 승인이 필요하다 |
+
+**v2에 남는 한계**
+
+- **Pilot 재실행 없음:** Pilot도 셸이 막힌 환경이었다. 정책 시작값은 그 Pilot을 근거로 정해졌지만 Pilot을 다시 하지 않았다.
+- **같은 과제 반복:** v1에서 같은 과제·같은 모델로 40슬롯을 실행했다. v1의 에이전트 출력은 v2에 전달되지 않는다. 다만 운영자와 개발 측은 v1 결과를 이미 봤다.
+
 ### AAH-D02 큐레이터 환경 검증
 
 2026-11-27에 운영자가 Docker 평가 통과를 보고했다. 기준본은 기능 FAIL(예상)·회귀 PASS였고, 참조본은 기능·회귀·지시 검사 모두 PASS였다. 운영자 출력은 `CURATOR_DOCKER_PAIR_PASS AAH-D02 d96a468e-2b50-4dd3-bf4f-fa3eb3a7a05f`이다. 비작성자 검토와 Main 승인 절차가 남았다.

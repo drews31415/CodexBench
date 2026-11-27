@@ -29,7 +29,20 @@ def test_profile_has_exact_absolute_roots(tmp_path):
         live_dev01.CHECKOUT.as_posix(): "deny", auth.as_posix(): "deny",
     }
     sandbox = live_dev01._sandbox_command(work, auth, python)
-    assert sandbox[:5] == ("-c", "windows.sandbox=mxc", "-c", permission, "sandbox")
+    policy = tuple(token for setting in live_dev01.SHELL_ENV_POLICY for token in ("-c", setting))
+    assert sandbox[:9] == ("-c", "windows.sandbox=mxc", *policy, "-c", permission, "sandbox")
+
+
+def test_agent_shell_and_access_probe_share_a_launchable_environment(tmp_path):
+    """EL-20261127-034: MXC needs SYSTEMROOT; the probe path must use the agent's shell policy."""
+    config = live_dev01._configuration(tmp_path / "run", tmp_path / ".auth", tmp_path / "python.exe")
+    sandbox = live_dev01._sandbox_command(tmp_path / "run", tmp_path / ".auth", tmp_path / "python.exe")
+    policy = [arg for arg in config if arg.startswith("shell_environment_policy.")]
+    assert policy == list(live_dev01.SHELL_ENV_POLICY)
+    assert [arg for arg in sandbox if arg.startswith("shell_environment_policy.")] == policy
+    assert 'shell_environment_policy.inherit="none"' not in config
+    assert "SYSTEMROOT" in live_dev01.SHELL_ENV_NAMES
+    assert not {"USERPROFILE", "APPDATA", "LOCALAPPDATA", "CODEX_HOME"} & set(live_dev01.SHELL_ENV_NAMES)
     assert "--disable" not in sandbox and "--include-managed-config" in sandbox
 
 
@@ -208,11 +221,31 @@ def test_runtime_summary_normalizes_synthetic_jsonl():
     assert summary["event_coverage"] == {
         "malformed_lines": 1, "unknown_events": 1, "unknown_item_events": 1,
         "item_event_counts": {"command_execution": 3, "agent_message": 1},
+        "command_outcomes": {"completed": 1, "launch_failed": 0, "exit_zero": 1},
     }
     assert summary["usage_mode"] == "CUMULATIVE"
     assert summary["usage"] == {"input_tokens": 12, "cached_input_tokens": 8, "output_tokens": 4,
                                 "reasoning_output_tokens": 2, "cache_write_input_tokens": 0}
     assert "synthetic" not in json.dumps(summary)
+
+
+def test_runtime_summary_flags_agent_commands_the_sandbox_could_not_launch(tmp_path):
+    """EL-20261127-034: MXC refused every agent command because SYSTEMROOT was missing."""
+    failed = {"type": "item.completed", "item": {"id": "item_1", "type": "command_execution", "exit_code": 1,
+              "aggregated_output": "MXC launcher: The supplied `process.env` cannot launch a Windows process "
+                                   "container because it is missing the required variable(s): SYSTEMROOT."}}
+    test_failure = {"type": "item.completed", "item": {"id": "item_2", "type": "command_execution", "exit_code": 1,
+                    "aggregated_output": "FAILED test_functional.py::test_total"}}
+    data = b"\n".join(json.dumps(e).encode() for e in (failed, test_failure))
+    summary = live_dev01._event_summary(data)
+    assert summary["failure_codes"] == ["AGENT_SHELL_UNAVAILABLE"]
+    assert summary["event_coverage"]["command_outcomes"] == {"completed": 2, "launch_failed": 1, "exit_zero": 0}
+    assert "SYSTEMROOT" not in json.dumps(summary)
+    restricted = tmp_path / "restricted"
+    restricted.mkdir()
+    for index, event in enumerate((failed, test_failure), 1):
+        (restricted / f"turn-0001-raw-{index:05d}.json").write_text(json.dumps(event))
+    assert live_dev01.agent_shell_launch_failures(tmp_path) == 1
 
 
 @pytest.mark.parametrize("events", [

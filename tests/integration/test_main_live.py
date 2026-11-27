@@ -20,7 +20,8 @@ from evaluation.runner import EvaluationRequest, write_result
 
 
 IDENTITY = {"transport": "local-synthetic-test"}
-LOGGED_HASH = "de14ca4ee0a1d7a5e995808df347a370ccb1bc011a61745d506a5c258f49356d"
+# Normalized live settings after the agent shell environment fix (EL-20261127-034).
+LOGGED_HASH = "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b"
 TASKS = ("AAH-S02", "AAH-S03")
 MODULE = {"AAH-S02": "line_total.py", "AAH-S03": "csv_rows.py"}
 SYNTHETIC_SUITES = {
@@ -180,6 +181,48 @@ def run(world, **overrides):
     kwargs.update(overrides)
     curators = kwargs.pop("curators", world.curators)
     return main_schedule.execute_live(curators, **kwargs)
+
+
+def test_unlaunchable_agent_shell_stops_the_schedule_at_the_first_slot(world, monkeypatch):
+    """EL-20261127-034: every agent command failed with an MXC launcher error in aah-main-emergency-v1."""
+    blocked = {"type": "item.completed", "item": {
+        "id": "item_1", "type": "command_execution", "command": "cmd /c dir", "exit_code": 1, "status": "failed",
+        "aggregated_output": "MXC launcher: The supplied `process.env` cannot launch a Windows process container "
+                             "because it is missing the required variable(s): SYSTEMROOT."}}
+
+    def broken_turn():
+        events = ({"type": "thread.started", "thread_id": str(uuid4())}, {"type": "turn.started"}, blocked,
+                  {"type": "turn.completed", "usage": {"input_tokens": 4, "output_tokens": 2}})
+        return SimpleNamespace(status="EXITED", exit_code=0, stderr=b"", total_processes=1, remaining_process_count=0,
+                               stdout=b"\n".join(canonical_json_bytes(e) for e in events))
+
+    monkeypatch.setattr(sys.modules[__name__], "fake_turn", broken_turn)
+    with pytest.raises(ContractError, match="AGENT_SHELL_UNAVAILABLE"):
+        run(world)
+    assert world.launches.count("exec") == 1
+
+
+def test_access_refresh_rebinds_records_without_changing_inclusion(world, monkeypatch):
+    root = world.tmp / "rechecked"
+    for task_id in TASKS:
+        target = root / f"access-{task_id}-20990101-000000"
+        target.mkdir(parents=True)
+        shutil.copyfile(world.tmp / f"access-{task_id}.json", target / "access.json")
+    monkeypatch.setattr(main_freeze, "EXPERIMENT_ID", "synthetic-v2")
+    refresh = main_freeze.refresh_access(root, world.inclusion)
+    assert sorted(refresh["tasks"]) == list(TASKS) and refresh["tasks"][TASKS[0]]["permission_settings_hash"] == [
+        LOGGED_HASH]
+    path = world.tmp / "refresh.json"
+    path.write_bytes(canonical_json_bytes(refresh))
+    freeze = world.tmp / "freeze-v2.json"
+    main_freeze.write(freeze, world.inclusion, identity=IDENTITY, access_refresh=path)
+    same, draft = main_freeze.reproduce(freeze, world.inclusion, identity=IDENTITY)
+    assert same and draft["access_refresh"]["sha256"] == sha256_bytes(path.read_bytes())
+    assert {t["access_record"] for t in draft["tasks"].values()} == {
+        v["access_record"] for v in refresh["tasks"].values()}
+    path.write_bytes(canonical_json_bytes(refresh | {"inclusion_sha256": "0" * 64}))
+    with pytest.raises(ContractError, match="not bound to this inclusion"):
+        main_freeze.build(world.inclusion, identity=IDENTITY, access_refresh=path)
 
 
 def test_freeze_is_reproducible_and_scales_budget_with_tasks(world):

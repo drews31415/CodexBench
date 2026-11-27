@@ -190,11 +190,18 @@ def _permission_override(workspace: Path, credential_root: Path, python: Path) -
     return f"permissions.{PROFILE}={{filesystem={{{entries}}}, network={{enabled=false}}}}"
 
 
+# Agent shell commands get only these variables. MXC refuses to start a Windows process container
+# without SYSTEMROOT, so `inherit="none"` left every agent command unlaunchable (EL-20261127-034).
+SHELL_ENV_NAMES = ("SYSTEMROOT", "WINDIR", "COMSPEC", "PATH", "PATHEXT")
+SHELL_ENV_POLICY = ('shell_environment_policy.inherit="all"',
+                    "shell_environment_policy.include_only=[" + ",".join(f'"{n}"' for n in SHELL_ENV_NAMES) + "]")
+
+
 def _configuration(workspace: Path, credential_root: Path, python: Path) -> tuple[str, ...]:
     overrides = (
         'windows.sandbox="mxc"', f'default_permissions="{PROFILE}"',
         'approval_policy="never"', 'web_search="disabled"', 'project_doc_max_bytes=0',
-        'shell_environment_policy.inherit="none"', 'allow_login_shell=false', 'model_provider="openai"',
+        *SHELL_ENV_POLICY, 'allow_login_shell=false', 'model_provider="openai"',
         _permission_override(workspace, credential_root, python),
     )
     args = tuple(token for setting in overrides for token in ("-c", setting))
@@ -204,7 +211,10 @@ def _configuration(workspace: Path, credential_root: Path, python: Path) -> tupl
 
 
 def _sandbox_command(workspace: Path, credential_root: Path, python: Path) -> tuple[str, ...]:
-    return ("-c", "windows.sandbox=mxc", "-c", _permission_override(workspace, credential_root, python),
+    # The sandbox probe uses the agent's shell environment policy so access checks exercise the
+    # same process environment as agent commands.
+    policy = tuple(token for setting in SHELL_ENV_POLICY for token in ("-c", setting))
+    return ("-c", "windows.sandbox=mxc", *policy, "-c", _permission_override(workspace, credential_root, python),
             "sandbox", "--include-managed-config", "--permission-profile", PROFILE, "--cd", str(workspace), "--")
 
 
@@ -217,6 +227,30 @@ def _turn_command(config: tuple[str, ...], *, persist: bool = False, session_id:
     return ("exec", *config, *flags, "--color", "never", *(() if persist else ("--ephemeral",)), "--", "-")
 
 
+MXC_LAUNCH_FAILURE = "MXC launcher:"
+
+
+def _shell_launch_failed(item: dict) -> bool:
+    """An agent command the sandbox could not start (an infrastructure failure, not a method result)."""
+    output = item.get("aggregated_output")
+    return isinstance(output, str) and output.lstrip().startswith(MXC_LAUNCH_FAILURE)
+
+
+def agent_shell_launch_failures(run_root: Path) -> int:
+    """Count agent commands in a recorded run whose process the sandbox could not launch."""
+    count = 0
+    for path in sorted((run_root / "restricted").glob("*.json")):
+        try:
+            event = json.loads(path.read_bytes())
+        except (ValueError, UnicodeError):
+            continue
+        item = event.get("item") if isinstance(event, dict) else None
+        if (event.get("type") == "item.completed" and isinstance(item, dict)
+                and item.get("type") == "command_execution" and _shell_launch_failed(item)):
+            count += 1
+    return count
+
+
 def _event_summary(data: bytes) -> dict:
     counts: Counter[str] = Counter()
     item_counts: Counter[str] = Counter()
@@ -224,6 +258,7 @@ def _event_summary(data: bytes) -> dict:
     thread = None
     usage = None
     failures = set()
+    commands = Counter({"completed": 0, "launch_failed": 0, "exit_zero": 0})
     for line in data.splitlines():
         if not line.strip():
             continue
@@ -246,6 +281,13 @@ def _event_summary(data: bytes) -> dict:
                 item_counts[item_type] += 1
             else:
                 unknown_items += 1
+            if kind == "item.completed" and item_type == "command_execution":
+                commands["completed"] += 1
+                if _shell_launch_failed(item):
+                    commands["launch_failed"] += 1
+                    failures.add("AGENT_SHELL_UNAVAILABLE")
+                elif item.get("exit_code") == 0:
+                    commands["exit_zero"] += 1
         elif kind == "thread.started":
             observed_id = event.get("thread_id")
             try:
@@ -278,7 +320,8 @@ def _event_summary(data: bytes) -> dict:
     if counts["turn.completed"] != 1 or counts["turn.failed"]:
         usage = None
     coverage = {"malformed_lines": malformed_lines, "unknown_events": unknown_events,
-                "item_event_counts": dict(item_counts), "unknown_item_events": unknown_items}
+                "item_event_counts": dict(item_counts), "unknown_item_events": unknown_items,
+                "command_outcomes": dict(commands)}
     return {"thread_id": thread, "event_counts": dict(counts), "usage": usage,
             "usage_mode": runtime_usage.USAGE_MODE, "event_coverage": coverage,
             "failure_codes": sorted(failures), "stdout_sha256": sha256_bytes(data)}
@@ -510,6 +553,8 @@ def _run(directory: Path, work_root: Path, request, report: dict, *, execute: bo
                 summary["event_counts"].get("turn.completed") != 1 or summary["event_counts"].get("turn.failed")):
             failures = ", ".join(summary["failure_codes"]) or f"{turn.status}, exit={turn.exit_code}"
             raise SmokeBlocked(f"Codex turn did not complete ({failures})")
+        if summary["event_coverage"]["command_outcomes"]["launch_failed"]:
+            raise SmokeBlocked("Agent shell commands could not launch in the sandbox (AGENT_SHELL_UNAVAILABLE)")
         if baseline.read_bytes() != frozen_base or any(path.read_bytes() != canary for path in protected):
             raise SmokeBlocked("Protected files changed during the turn")
         snapshot = manager.snapshot(handle)

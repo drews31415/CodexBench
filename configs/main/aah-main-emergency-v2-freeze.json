@@ -1,0 +1,663 @@
+{
+  "access_refresh": {
+    "path": "configs/main/aah-main-emergency-v2-access.json",
+    "reason": "agent shell environment fix (EL-20261127-034); task inclusion unchanged",
+    "sha256": "5647f19bec21a18f4be659c66d7135e94ad8317d3ca4fcf27269c1446a5bf550"
+  },
+  "amendment": {
+    "decision": "DL-031",
+    "id": "AMD-01",
+    "sha256": "8e9020f8caf61cb99d115aa70b63540023db97c2ca23f1a13ef214568e951f73"
+  },
+  "analysis": {
+    "config": {
+      "amendment": "AMD-01",
+      "analysis_seed": 20261126,
+      "bootstrap": {
+        "cluster_key": "task_family_id",
+        "confidence": 0.95,
+        "interval": "percentile",
+        "iterations": 10000,
+        "min_clusters_for_interval": 2,
+        "undefined_cps_policy": "withhold_finite_interval"
+      },
+      "interpretation": "exploratory",
+      "missing": {
+        "infrastructure_replacement_limit": 0,
+        "never_impute_cost_as_zero": true
+      },
+      "optional_inference": {
+        "multiple_comparison": null,
+        "noninferiority_margin": null,
+        "significance_tests": "none"
+      },
+      "p_r3_interval": "not_approved_exploratory",
+      "primary_blocks": "complete",
+      "primary_contrasts": [
+        "P-R1",
+        "P-R3"
+      ],
+      "schema_version": "1.0",
+      "secondary_contrasts": [
+        "E-B",
+        "C-B",
+        "D-B",
+        "E-C",
+        "E-D",
+        "E-A",
+        "CTX_MAIN",
+        "GRAPH_MAIN",
+        "INTERACTION"
+      ]
+    },
+    "config_sha256": "7acf6117226cd72aea564a192c4a25a3e6c9f569c66d65462628b7b9274b26ef"
+  },
+  "budget": {
+    "cleanup_reserve_ms": 15000,
+    "extra_payment_krw": 0,
+    "initial_turns_per_slot": 1,
+    "max_initial_turns": 40,
+    "max_recovery_turns": 64,
+    "max_total_turns": 104,
+    "max_transitions": 100,
+    "native_turn_ms": 105000,
+    "profile": "existing-chatgpt-subscription",
+    "recovery_turns_per_eligible_slot": 2,
+    "supplement_cap": 2048,
+    "token_limit_mode": "observe_only",
+    "wall_ms_per_run": 360000
+  },
+  "code": {
+    "code_version": "2401bc7fc1edbefac010e824c1b50e994f05f5ae99539186074e819190d7a7ff",
+    "files": 119
+  },
+  "evaluator": {
+    "curator_profile": "main-curator-docker-v1",
+    "public_profile": "main-public-docker-v1",
+    "worker_sha256": "c7d9da9fdfba457df68e017ec4578d73c7ba3cf220fb24f4391736ce9392b231"
+  },
+  "experiment_id": "aah-main-emergency-v2",
+  "freeze_id": "aah-main-emergency-v2",
+  "inclusion": {
+    "excluded": {},
+    "min_tasks": 5,
+    "path": "configs/main/amd01-inclusion.json",
+    "sha256": "94a518a6d5628494168be7c373890c52239daa66d30c346364145522ccabce23"
+  },
+  "model": {
+    "adapter": "codex_cli",
+    "model_id": "gpt-6-luna",
+    "reasoning_effort": "low",
+    "runtime_version": "0.166.0",
+    "session_mode": "SAME_SESSION"
+  },
+  "permissions": {
+    "access_profile": "main-s03-mxc-access-v1",
+    "mxc_profile": "aah_dev01_mxc"
+  },
+  "schedule": {
+    "seed": 20261127,
+    "slots": [
+      {
+        "condition": "D",
+        "slot_id": "slot-0001",
+        "task_id": "AAH-C02"
+      },
+      {
+        "condition": "E",
+        "slot_id": "slot-0002",
+        "task_id": "AAH-C02"
+      },
+      {
+        "condition": "B",
+        "slot_id": "slot-0003",
+        "task_id": "AAH-C02"
+      },
+      {
+        "condition": "C",
+        "slot_id": "slot-0004",
+        "task_id": "AAH-C02"
+      },
+      {
+        "condition": "A",
+        "slot_id": "slot-0005",
+        "task_id": "AAH-C02"
+      },
+      {
+        "condition": "D",
+        "slot_id": "slot-0006",
+        "task_id": "AAH-C03"
+      },
+      {
+        "condition": "A",
+        "slot_id": "slot-0007",
+        "task_id": "AAH-C03"
+      },
+      {
+        "condition": "E",
+        "slot_id": "slot-0008",
+        "task_id": "AAH-C03"
+      },
+      {
+        "condition": "C",
+        "slot_id": "slot-0009",
+        "task_id": "AAH-C03"
+      },
+      {
+        "condition": "B",
+        "slot_id": "slot-0010",
+        "task_id": "AAH-C03"
+      },
+      {
+        "condition": "E",
+        "slot_id": "slot-0011",
+        "task_id": "AAH-D02"
+      },
+      {
+        "condition": "B",
+        "slot_id": "slot-0012",
+        "task_id": "AAH-D02"
+      },
+      {
+        "condition": "D",
+        "slot_id": "slot-0013",
+        "task_id": "AAH-D02"
+      },
+      {
+        "condition": "A",
+        "slot_id": "slot-0014",
+        "task_id": "AAH-D02"
+      },
+      {
+        "condition": "C",
+        "slot_id": "slot-0015",
+        "task_id": "AAH-D02"
+      },
+      {
+        "condition": "D",
+        "slot_id": "slot-0016",
+        "task_id": "AAH-D04"
+      },
+      {
+        "condition": "E",
+        "slot_id": "slot-0017",
+        "task_id": "AAH-D04"
+      },
+      {
+        "condition": "C",
+        "slot_id": "slot-0018",
+        "task_id": "AAH-D04"
+      },
+      {
+        "condition": "B",
+        "slot_id": "slot-0019",
+        "task_id": "AAH-D04"
+      },
+      {
+        "condition": "A",
+        "slot_id": "slot-0020",
+        "task_id": "AAH-D04"
+      },
+      {
+        "condition": "B",
+        "slot_id": "slot-0021",
+        "task_id": "AAH-R03"
+      },
+      {
+        "condition": "C",
+        "slot_id": "slot-0022",
+        "task_id": "AAH-R03"
+      },
+      {
+        "condition": "E",
+        "slot_id": "slot-0023",
+        "task_id": "AAH-R03"
+      },
+      {
+        "condition": "D",
+        "slot_id": "slot-0024",
+        "task_id": "AAH-R03"
+      },
+      {
+        "condition": "A",
+        "slot_id": "slot-0025",
+        "task_id": "AAH-R03"
+      },
+      {
+        "condition": "E",
+        "slot_id": "slot-0026",
+        "task_id": "AAH-R04"
+      },
+      {
+        "condition": "B",
+        "slot_id": "slot-0027",
+        "task_id": "AAH-R04"
+      },
+      {
+        "condition": "C",
+        "slot_id": "slot-0028",
+        "task_id": "AAH-R04"
+      },
+      {
+        "condition": "D",
+        "slot_id": "slot-0029",
+        "task_id": "AAH-R04"
+      },
+      {
+        "condition": "A",
+        "slot_id": "slot-0030",
+        "task_id": "AAH-R04"
+      },
+      {
+        "condition": "B",
+        "slot_id": "slot-0031",
+        "task_id": "AAH-S02"
+      },
+      {
+        "condition": "E",
+        "slot_id": "slot-0032",
+        "task_id": "AAH-S02"
+      },
+      {
+        "condition": "C",
+        "slot_id": "slot-0033",
+        "task_id": "AAH-S02"
+      },
+      {
+        "condition": "A",
+        "slot_id": "slot-0034",
+        "task_id": "AAH-S02"
+      },
+      {
+        "condition": "D",
+        "slot_id": "slot-0035",
+        "task_id": "AAH-S02"
+      },
+      {
+        "condition": "E",
+        "slot_id": "slot-0036",
+        "task_id": "AAH-S03"
+      },
+      {
+        "condition": "A",
+        "slot_id": "slot-0037",
+        "task_id": "AAH-S03"
+      },
+      {
+        "condition": "C",
+        "slot_id": "slot-0038",
+        "task_id": "AAH-S03"
+      },
+      {
+        "condition": "B",
+        "slot_id": "slot-0039",
+        "task_id": "AAH-S03"
+      },
+      {
+        "condition": "D",
+        "slot_id": "slot-0040",
+        "task_id": "AAH-S03"
+      }
+    ]
+  },
+  "schema_version": "1.0",
+  "scope": {
+    "ablation": "NOT_RUN",
+    "checkpoint": "conditional (AMD-01 §7.2), separate experiment ID",
+    "conditions": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "plan": "Emergency (exploratory)",
+    "repetitions": 1
+  },
+  "tasks": {
+    "AAH-C02": {
+      "access_record": "results/g2-preparation/amd01-v2/access-AAH-C02-20261127-165535/access.json",
+      "access_record_sha256": "bdcfb8c082ba62651d8513f49f2627b430fa6894de78955d2dbec767d0d8b045",
+      "allowed_change_paths": [
+        "reserve.py"
+      ],
+      "approved_check_ids": [
+        "AAH-C02-P-FUNC",
+        "AAH-C02-P-REG"
+      ],
+      "base_revision": "c0afce9513141409ec14b2aa990b5a208bce5116b98dc1e2c41fcc7b185b70ad",
+      "curator_manifest_sha256": "7ab31307a44863ecf72e5bd8666a662d82bcc188e24c8648f6dc889c3bcfb0ff",
+      "doc_state": "NOISY",
+      "fix_evidence_id": null,
+      "fix_round": null,
+      "fixed_requirements_hash": "de85bd36fc447c1ab3acfc731a15d1425473eefac4b5afa1609e27b2b7622412",
+      "initial_snapshot_id": {
+        "A": "c32a84e796503b0f890163f07b2252d62dfe58ab3e9a3f4d5082eaa4cfd58020",
+        "B": "c32a84e796503b0f890163f07b2252d62dfe58ab3e9a3f4d5082eaa4cfd58020",
+        "C": "c32a84e796503b0f890163f07b2252d62dfe58ab3e9a3f4d5082eaa4cfd58020",
+        "D": "c32a84e796503b0f890163f07b2252d62dfe58ab3e9a3f4d5082eaa4cfd58020",
+        "E": "c32a84e796503b0f890163f07b2252d62dfe58ab3e9a3f4d5082eaa4cfd58020"
+      },
+      "mandatory_hash": "d19512a0f1bae4e0bb44a11f21e9df09c6b662e106c5779cf634cf91de9f994c",
+      "permission_settings_hash": {
+        "A": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "B": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "C": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "D": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "E": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b"
+      },
+      "public_environment_sha256": "f98af066a8be966f0ee4697e87586ac91d306b8866fb72eeaff32ab92efd5acd",
+      "public_spec_sha256": "2e7142815fbb9cd1e03dbab8b61f355b0573be999f247b93ec18dccb6f2e8069",
+      "public_suite_sha256": {
+        "P-FUNC": "ebf5dcb189c3cfc924353befc09bad027510cb3a45006aaaa03cfe272613c64c",
+        "P-REG": "a00169b891614f2f63bd2964d309bbc3eda1906220734f2583d0741873708c16"
+      },
+      "repo_id": "R-ORDER",
+      "review_evidence_id": "f2bf78486b69f59cc52c4b7e79d69f639caf11877ff3802cd0d0a2fce0bdf482",
+      "reviewer_id": "ai-review:claude-opus-5-5",
+      "suite_fixed": false,
+      "task_family_id": "order-batch-reservation-atomicity"
+    },
+    "AAH-C03": {
+      "access_record": "results/g2-preparation/amd01-v2/access-AAH-C03-20261127-165535/access.json",
+      "access_record_sha256": "f502308b12a7e3dd788ed509d41fb53116ba7cfbc57d33e8a701f622ea6b1652",
+      "allowed_change_paths": [
+        "ingest.py"
+      ],
+      "approved_check_ids": [
+        "AAH-C03-P-FUNC",
+        "AAH-C03-P-REG"
+      ],
+      "base_revision": "3ef93c7ff39e7c64b24668776d68bc69060c8432874b7dad06feb50ee35ca287",
+      "curator_manifest_sha256": "b9b4095742f6728386b1a20207cdbe8caf8746a102b546921c273e1c1d67b40a",
+      "doc_state": "STALE",
+      "fix_evidence_id": "8b8dced8a2646aa1adb3e10d01475136bc138998cfabd81e19532c7fdf677503",
+      "fix_round": 3,
+      "fixed_requirements_hash": "ed763c9836f533bc8e088063d93f88d3b9a564a37b63465e37a11154d05eb8ac",
+      "initial_snapshot_id": {
+        "A": "88ed2523bb8e7d1638581efc6110205e69ef17414d4cb7c767eb1f34ba927cd9",
+        "B": "88ed2523bb8e7d1638581efc6110205e69ef17414d4cb7c767eb1f34ba927cd9",
+        "C": "88ed2523bb8e7d1638581efc6110205e69ef17414d4cb7c767eb1f34ba927cd9",
+        "D": "88ed2523bb8e7d1638581efc6110205e69ef17414d4cb7c767eb1f34ba927cd9",
+        "E": "88ed2523bb8e7d1638581efc6110205e69ef17414d4cb7c767eb1f34ba927cd9"
+      },
+      "mandatory_hash": "09402e32997c0e22ed83bceb060f143a488c7c3250dcd0c09abb4e670a244bb8",
+      "permission_settings_hash": {
+        "A": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "B": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "C": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "D": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "E": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b"
+      },
+      "public_environment_sha256": "f98af066a8be966f0ee4697e87586ac91d306b8866fb72eeaff32ab92efd5acd",
+      "public_spec_sha256": "d6b82fb07425af0df92a59bbffa765c3aa8cf8b4196b66a90745322dc7b1a9d3",
+      "public_suite_sha256": {
+        "P-FUNC": "6d58bf2957615bca12b37db67e45b3bd2aeaa3dd9a21a1c5eef28c14278899f1",
+        "P-REG": "9a0a479efbe1136dcbd264f62bf211e591e9df089004c312f466f0a0a81e7818"
+      },
+      "repo_id": "R-INGEST",
+      "review_evidence_id": "ac1d54c89e2bd42784980b0e97f1b53b4eed514aad661f2d1fbb8397f1c8c013",
+      "reviewer_id": "ai-review:claude-opus-5-5",
+      "suite_fixed": true,
+      "task_family_id": "ingest-batch-order-and-duplicate-reports"
+    },
+    "AAH-D02": {
+      "access_record": "results/g2-preparation/amd01-v2/access-AAH-D02-20261127-165535/access.json",
+      "access_record_sha256": "f0bb14a7ea2e0bf392dc58a66d526385210536601374812f1fe48ed40bb7ecd6",
+      "allowed_change_paths": [
+        "orders.py"
+      ],
+      "approved_check_ids": [
+        "AAH-D02-P-FUNC",
+        "AAH-D02-P-REG"
+      ],
+      "base_revision": "2f54b3dac445b047cd52bae91200fca87c622aafbe3211ad05067b1f80e3344c",
+      "curator_manifest_sha256": "7e7f8d7afc852c47160809752c1e45a5523412abd8a918ba4e68ec965ed8ec80",
+      "doc_state": "NORMAL",
+      "fix_evidence_id": "6b84f426a44c981ab91f13e3817384d9fbdd2222aac6fec09c6dae4388f5143b",
+      "fix_round": 3,
+      "fixed_requirements_hash": "8e12d99b884b1e0856ab770969769fea0716a919d47962c42741540e85c10755",
+      "initial_snapshot_id": {
+        "A": "0230454408344a62718db5d6506df95713a33a62fb000aa32f303ae6fb6e9edb",
+        "B": "0230454408344a62718db5d6506df95713a33a62fb000aa32f303ae6fb6e9edb",
+        "C": "0230454408344a62718db5d6506df95713a33a62fb000aa32f303ae6fb6e9edb",
+        "D": "0230454408344a62718db5d6506df95713a33a62fb000aa32f303ae6fb6e9edb",
+        "E": "0230454408344a62718db5d6506df95713a33a62fb000aa32f303ae6fb6e9edb"
+      },
+      "mandatory_hash": "ddf01249b04b3ec4f219de94f90726f146dbcddad85139bb7e0f7598f09b4634",
+      "permission_settings_hash": {
+        "A": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "B": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "C": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "D": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "E": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b"
+      },
+      "public_environment_sha256": "f98af066a8be966f0ee4697e87586ac91d306b8866fb72eeaff32ab92efd5acd",
+      "public_spec_sha256": "e67c96f4d00a330d50376d9e8faa09bd13d8caa62e2f7504a4893b964cf99fa3",
+      "public_suite_sha256": {
+        "P-FUNC": "1227f0d9386952eacd6efd6c5637b91e50706caf1e27ffe8c8ecedfa05baa261",
+        "P-REG": "b4a8af75f82015a8ac6eb91184373de6e2c7a9adf9865fd691adc48529c8dade"
+      },
+      "repo_id": "R-ORDER",
+      "review_evidence_id": "8ed795b47f1366461616788daf06082ca878838b52ccf189eece549ffa55534d",
+      "reviewer_id": "ai-review:claude-opus-5-5",
+      "suite_fixed": true,
+      "task_family_id": "order-cancel-reservation-identity"
+    },
+    "AAH-D04": {
+      "access_record": "results/g2-preparation/amd01-v2/access-AAH-D04-20261127-165535/access.json",
+      "access_record_sha256": "4131b47679e8a3d90929fc30c71d1bbdb5695b10781fd9ee7f1062e634575f79",
+      "allowed_change_paths": [
+        "restore.py"
+      ],
+      "approved_check_ids": [
+        "AAH-D04-P-FUNC",
+        "AAH-D04-P-REG"
+      ],
+      "base_revision": "592ff436570766164a433ebe0bb582df741e842d9f2f8c41e2bdc06984c107be",
+      "curator_manifest_sha256": "dd65867c0167f548eea81e29cb2595d14b438f995424544888ad9b6a4a1a71be",
+      "doc_state": "NORMAL",
+      "fix_evidence_id": "b51f0866df8d9396061b29caab79f0cabc22fe6dfc0b65189cac54901dd7bd4c",
+      "fix_round": 3,
+      "fixed_requirements_hash": "071fb811b16a765f70e7fae54bd54c45a22c0c84859b2c0bb64fff688219060d",
+      "initial_snapshot_id": {
+        "A": "4a2db7d135a8546ad6db22bc6b3caf4861daa5d4b6257347d96c8f5b5167736e",
+        "B": "4a2db7d135a8546ad6db22bc6b3caf4861daa5d4b6257347d96c8f5b5167736e",
+        "C": "4a2db7d135a8546ad6db22bc6b3caf4861daa5d4b6257347d96c8f5b5167736e",
+        "D": "4a2db7d135a8546ad6db22bc6b3caf4861daa5d4b6257347d96c8f5b5167736e",
+        "E": "4a2db7d135a8546ad6db22bc6b3caf4861daa5d4b6257347d96c8f5b5167736e"
+      },
+      "mandatory_hash": "612b7758cfe1c024a5bcd6443090751668c941a967d90651f69cd007f1aa09b3",
+      "permission_settings_hash": {
+        "A": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "B": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "C": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "D": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "E": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b"
+      },
+      "public_environment_sha256": "f98af066a8be966f0ee4697e87586ac91d306b8866fb72eeaff32ab92efd5acd",
+      "public_spec_sha256": "8448cdeb65edcbed9ce2899c857aaf3c1bcacfd584f6106b1f4a27b1a05c1263",
+      "public_suite_sha256": {
+        "P-FUNC": "3dcf1050e344e377510d42ce04f46d5c948403368f5d2ed815228500facd32b9",
+        "P-REG": "e2fd8d465f7ad31c3fa644e7c8eac38a25f2e3d2575ceb3d51c238f20b01fc54"
+      },
+      "repo_id": "R-SCHED",
+      "review_evidence_id": "928c51287988740560ea4d77f175b1ad7ef59bdd5c3a4640b778ed1be3f11609",
+      "reviewer_id": "ai-review:claude-opus-5-5",
+      "suite_fixed": true,
+      "task_family_id": "schedule-rehydrate-due-tick"
+    },
+    "AAH-R03": {
+      "access_record": "results/g2-preparation/amd01-v2/access-AAH-R03-20261127-165535/access.json",
+      "access_record_sha256": "b66772e197a9c04bf1fd282f5c5f518cfa494b449d2452b8071259c515081d59",
+      "allowed_change_paths": [
+        "day_format.py"
+      ],
+      "approved_check_ids": [
+        "AAH-R03-P-FUNC",
+        "AAH-R03-P-REG"
+      ],
+      "base_revision": "63de1c9bbbb80a805b54833f104472a34cfe2873ed6b74c0a15d38878e33bf3c",
+      "curator_manifest_sha256": "2c631b26b111dca82ced438eac9618dd5a97e546bba32a76a9db553b5d346502",
+      "doc_state": "NORMAL",
+      "fix_evidence_id": null,
+      "fix_round": null,
+      "fixed_requirements_hash": "30793a47d9ca831836c0082ab0082c35e8f6fe04e6a5933bbeb939ee2e7aca96",
+      "initial_snapshot_id": {
+        "A": "f150ad063330e5222929a5b9917ca147be554c72957645360d336eb1797b1678",
+        "B": "f150ad063330e5222929a5b9917ca147be554c72957645360d336eb1797b1678",
+        "C": "f150ad063330e5222929a5b9917ca147be554c72957645360d336eb1797b1678",
+        "D": "f150ad063330e5222929a5b9917ca147be554c72957645360d336eb1797b1678",
+        "E": "f150ad063330e5222929a5b9917ca147be554c72957645360d336eb1797b1678"
+      },
+      "mandatory_hash": "19c02ff020c698acec50175f9007b7f0cc13e675f749d3dc2be014e4ace0ec70",
+      "permission_settings_hash": {
+        "A": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "B": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "C": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "D": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "E": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b"
+      },
+      "public_environment_sha256": "f98af066a8be966f0ee4697e87586ac91d306b8866fb72eeaff32ab92efd5acd",
+      "public_spec_sha256": "187fa54afdb915e8a70c8e83132bbe996d2fcee1ad175d618f2f8b3567184187",
+      "public_suite_sha256": {
+        "P-FUNC": "a70d2f1e4203d8e97fde576173322bab0628042bee747d51586285db0539bdf0",
+        "P-REG": "112b45d662ec9f273aa27047b3bbba722a418c20fb7ea79f85a92862099d066a"
+      },
+      "repo_id": "R-INGEST",
+      "review_evidence_id": "35e4f3dc5b7e9c87c4fa0573d18c6e317e0b430b684b6e6c5ddd6f7b333f78f6",
+      "reviewer_id": "ai-review:claude-opus-5-5",
+      "suite_fixed": false,
+      "task_family_id": "ingest-date-notation-compatibility"
+    },
+    "AAH-R04": {
+      "access_record": "results/g2-preparation/amd01-v2/access-AAH-R04-20261127-165535/access.json",
+      "access_record_sha256": "ff79ab9d9dc4de6a95cd1dedecb8e572687e907d9aeae0f6c3de5845f9c02ac1",
+      "allowed_change_paths": [
+        "retry.py"
+      ],
+      "approved_check_ids": [
+        "AAH-R04-P-FUNC",
+        "AAH-R04-P-REG"
+      ],
+      "base_revision": "5e455d6c942f56803f2b12e3182223e11d7d85d29f5ba82b4e0acb6985b5b0ae",
+      "curator_manifest_sha256": "3b988b3b0a5eedf2ff89ea0bb7505c2906bbfc96c42cde82f87e7780e8e2fe35",
+      "doc_state": "NOISY",
+      "fix_evidence_id": "8cfff813ae77c9702fc8213c7657dc4d3f94d774e8a122443cb674900ef2361a",
+      "fix_round": 3,
+      "fixed_requirements_hash": "0aeae1839bce573d658b7f554959497685df6c9da5ee9da115a3a9b73b74cc63",
+      "initial_snapshot_id": {
+        "A": "d07b613f62594eacbf3023fd7a3fa308e8352976ffdc70d483fba54a9ea6045a",
+        "B": "d07b613f62594eacbf3023fd7a3fa308e8352976ffdc70d483fba54a9ea6045a",
+        "C": "d07b613f62594eacbf3023fd7a3fa308e8352976ffdc70d483fba54a9ea6045a",
+        "D": "d07b613f62594eacbf3023fd7a3fa308e8352976ffdc70d483fba54a9ea6045a",
+        "E": "d07b613f62594eacbf3023fd7a3fa308e8352976ffdc70d483fba54a9ea6045a"
+      },
+      "mandatory_hash": "89f7d9d96f5f383829a4cee17cdb00b1f875b975963efc90d4b8f71c5e377845",
+      "permission_settings_hash": {
+        "A": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "B": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "C": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "D": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "E": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b"
+      },
+      "public_environment_sha256": "f98af066a8be966f0ee4697e87586ac91d306b8866fb72eeaff32ab92efd5acd",
+      "public_spec_sha256": "d144ab55e4e3352f53405f249896e84185367a80c9e35809b8c2948e2b1340c2",
+      "public_suite_sha256": {
+        "P-FUNC": "fca5e4ec9e3b56d78c96dce69f19c8b284e4bdcd90c4c5fbd2f21c456aa9b522",
+        "P-REG": "9f662a3c1d55d8a5cc0a197b05f8b0c4a24d428d95a3f862d4775f41e5168081"
+      },
+      "repo_id": "R-SCHED",
+      "review_evidence_id": "2c98165c7ca8f1d658967cdf1e9e038741464dc4bc954aea22396e6e1c13213e",
+      "reviewer_id": "ai-review:claude-opus-5-5",
+      "suite_fixed": true,
+      "task_family_id": "schedule-retry-delay-priority"
+    },
+    "AAH-S02": {
+      "access_record": "results/g2-preparation/amd01-v2/access-AAH-S02-20261127-165535/access.json",
+      "access_record_sha256": "9cd0c1cb7a51f3807158150d7daffee3e02efe16946b5778c49b874b48348fd2",
+      "allowed_change_paths": [
+        "line_total.py"
+      ],
+      "approved_check_ids": [
+        "AAH-S02-P-FUNC",
+        "AAH-S02-P-REG"
+      ],
+      "base_revision": "24d9acd59cc508b623534391bc0e6ba4868adecee222e04768ccd2332876a405",
+      "curator_manifest_sha256": "a412644b0bdb717e9c54b3b3cdb3dff343fc0ade673bd35ce11af09c762a43f5",
+      "doc_state": "NOISY",
+      "fix_evidence_id": "e5fd0828bcf880295bc349918d93da3df359bd06b5a42d25dc54f83c6acfb3ab",
+      "fix_round": 3,
+      "fixed_requirements_hash": "375d0992c6bb85e8b964441ebc71822c9fb4a237f700cff947a31f99e8761322",
+      "initial_snapshot_id": {
+        "A": "b83217e961c3efb38f02904fe70925116008d0baccbb89f025faf3f2c7ff616b",
+        "B": "b83217e961c3efb38f02904fe70925116008d0baccbb89f025faf3f2c7ff616b",
+        "C": "b83217e961c3efb38f02904fe70925116008d0baccbb89f025faf3f2c7ff616b",
+        "D": "b83217e961c3efb38f02904fe70925116008d0baccbb89f025faf3f2c7ff616b",
+        "E": "b83217e961c3efb38f02904fe70925116008d0baccbb89f025faf3f2c7ff616b"
+      },
+      "mandatory_hash": "3a566692ee59d2976a7340d78faa540fa3c844eeaf1a4dcf8eb1d8a4154b840a",
+      "permission_settings_hash": {
+        "A": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "B": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "C": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "D": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "E": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b"
+      },
+      "public_environment_sha256": "f98af066a8be966f0ee4697e87586ac91d306b8866fb72eeaff32ab92efd5acd",
+      "public_spec_sha256": "c08230e0216f15ba4981ba5487b01084a811fde1f452ea9bb3413d04e16095d0",
+      "public_suite_sha256": {
+        "P-FUNC": "754a1851cd71a4e069c6ac1e5209131ae107fb5ee1b769494947c105a7a82441",
+        "P-REG": "08368b3b89c9732b1a39e47b8fa4e76d32b61391f7b1729d2695157d114ee128"
+      },
+      "repo_id": "R-ORDER",
+      "review_evidence_id": "1107c341b573b5e49a26769633488a6d7b4b8b661b48128d81007d68ff4fac4a",
+      "reviewer_id": "ai-review:claude-opus-5-5",
+      "suite_fixed": true,
+      "task_family_id": "order-invoice-rounding"
+    },
+    "AAH-S03": {
+      "access_record": "results/g2-preparation/amd01-v2/access-AAH-S03-20261127-165535/access.json",
+      "access_record_sha256": "7d9d1c2b0ca16cc66ce5b2000a66570e132a7732137ed7e44a42f839c1367c2e",
+      "allowed_change_paths": [
+        "csv_rows.py"
+      ],
+      "approved_check_ids": [
+        "AAH-S03-P-FUNC",
+        "AAH-S03-P-REG"
+      ],
+      "base_revision": "1c3431bd3685219ad2e1fd2917e144ea1386ba0430433e620be07dbc932f25d5",
+      "curator_manifest_sha256": "1107e803da84aacd43481276869ebd646eb4d85a323e9448d786dccbd7a28ad5",
+      "doc_state": "STALE",
+      "fix_evidence_id": null,
+      "fix_round": null,
+      "fixed_requirements_hash": "59f799f52e900ffb15ed0d2ca2f98eeb9530e22e53aa1d7d25aee766da2578da",
+      "initial_snapshot_id": {
+        "A": "cef3a2987cb5fb0f1de8d1bdc6f32ae3fc2b41b3732d36a180b1caae752c8210",
+        "B": "cef3a2987cb5fb0f1de8d1bdc6f32ae3fc2b41b3732d36a180b1caae752c8210",
+        "C": "cef3a2987cb5fb0f1de8d1bdc6f32ae3fc2b41b3732d36a180b1caae752c8210",
+        "D": "cef3a2987cb5fb0f1de8d1bdc6f32ae3fc2b41b3732d36a180b1caae752c8210",
+        "E": "cef3a2987cb5fb0f1de8d1bdc6f32ae3fc2b41b3732d36a180b1caae752c8210"
+      },
+      "mandatory_hash": "b83f18909d59d2b5b9ee871555fcaf399f8adad12d8217c908461ce548e07c25",
+      "permission_settings_hash": {
+        "A": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "B": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "C": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "D": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b",
+        "E": "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b"
+      },
+      "public_environment_sha256": "f98af066a8be966f0ee4697e87586ac91d306b8866fb72eeaff32ab92efd5acd",
+      "public_spec_sha256": "d6f38d5fcbf8b6a129432e0688615b1a611d54aa6d64753e0f47d4981a037ff3",
+      "public_suite_sha256": {
+        "P-FUNC": "099b56c0919697bd38ec24950833a3b428516c89cdc62285f1272aae6d2a9b25",
+        "P-REG": "05c494ceb866054c9c124e4edf91e8d81947c4f7aa15c0c6dba8e66475ce413e"
+      },
+      "repo_id": "R-INGEST",
+      "review_evidence_id": "79ba49cf81a86d7df5cfefa749f548e8485172f40aad76a816c7f57270678e4d",
+      "reviewer_id": "ai-review:claude-opus-5-5",
+      "suite_fixed": false,
+      "task_family_id": "ingest-null-versus-zero-csv"
+    }
+  }
+}

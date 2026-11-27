@@ -382,6 +382,10 @@ def execute_live(curators: dict, *, freeze: Path = main_freeze.FREEZE, approval:
                 != ("LIVE_RUN_RECORDED", run_report.run_id, slot.task_id, slot.condition, run_report.turns_used)
                 or entry["permission_gate"]["status"] != "MATCH" or entry["snapshot_gate"]["status"] != "MATCH"):
             raise ContractError(f"Main slot {slot.slot_id} requires operator review")
+        # EL-20261127-034: a sandbox that cannot start agent commands invalidates the slot; stop the schedule.
+        if live_dev01.agent_shell_launch_failures(directory):
+            raise ContractError(f"Main slot {slot.slot_id} agent shell commands could not launch "
+                                "(AGENT_SHELL_UNAVAILABLE); operator review required")
 
     def evaluate(slot, run_report, directory):
         expected = frozen[slot.task_id]["curator_manifest_sha256"]

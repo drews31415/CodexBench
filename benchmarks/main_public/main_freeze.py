@@ -31,9 +31,14 @@ CHECKOUT = main_runner.CHECKOUT
 AMENDMENT = CHECKOUT / "docs/project/AMENDMENT_01_AI_REVIEW_EMERGENCY_MAIN.md"
 AMENDMENT_SHA256 = "8e9020f8caf61cb99d115aa70b63540023db97c2ca23f1a13ef214568e951f73"
 INCLUSION = CHECKOUT / "configs/main/amd01-inclusion.json"
-FREEZE = CHECKOUT / "configs/main/aah-main-emergency-v1-freeze.json"
-APPROVAL = CHECKOUT / "configs/main/aah-main-emergency-v1-approval.json"
-FREEZE_ID = EXPERIMENT_ID = "aah-main-emergency-v1"
+# v1 (aah-main-emergency-v1) ran with every agent shell command unlaunchable (EL-20261127-034); its freeze,
+# approval and results are kept as history. v2 reuses the AMD-01 inclusion decision with access records
+# re-checked under the fixed shell environment policy.
+FREEZE = CHECKOUT / "configs/main/aah-main-emergency-v2-freeze.json"
+APPROVAL = CHECKOUT / "configs/main/aah-main-emergency-v2-approval.json"
+ACCESS_REFRESH = CHECKOUT / "configs/main/aah-main-emergency-v2-access.json"
+ACCESS_ROOT = CHECKOUT / "results/g2-preparation/amd01-v2"
+FREEZE_ID = EXPERIMENT_ID = "aah-main-emergency-v2"
 CANDIDATES = tuple(sorted(amd01_variants.VARIANTS))
 MIN_TASKS = 5
 SEED = 20261127
@@ -59,6 +64,12 @@ class FreezeGateError(ContractError):
 def _display(path: Path) -> str:
     path = Path(path)
     return path.relative_to(CHECKOUT).as_posix() if path.is_relative_to(CHECKOUT) else path.name
+
+
+def _ref(path: Path) -> str:
+    """Checkout-relative POSIX path, or the absolute path for files outside the checkout."""
+    path = Path(path)
+    return path.relative_to(CHECKOUT).as_posix() if path.is_relative_to(CHECKOUT) else str(path)
 
 
 def _read_json(path: Path) -> tuple[dict, str]:
@@ -238,13 +249,38 @@ def plan_inputs(draft: dict) -> dict:
             "environment_hash": environments[0], "code_version": draft["code"]["code_version"]}
 
 
-def build(inclusion_path: Path = INCLUSION, *, identity: dict | None = None) -> dict:
+def refresh_access(root: Path = ACCESS_ROOT, inclusion_path: Path = INCLUSION) -> dict:
+    """Pick the latest passing access record per included task (re-run after a permission change)."""
+    inclusion, inclusion_hash = _read_json(inclusion_path)
+    tasks = {}
+    for task_id in inclusion["included"]:
+        found = sorted(root.glob(f"access-{task_id}-*/access.json"))
+        if not found:
+            raise ContractError(f"{task_id} has no re-checked access record under {_display(root)}")
+        record = main_runner.load_access_record(found[-1], sha256=None, task_id=task_id)
+        tasks[task_id] = {"access_record": _ref(found[-1]), "access_record_sha256": sha256_bytes(
+            read_regular(found[-1])[0]), "permission_settings_hash": sorted(
+            {v["permission_settings_hash"] for v in record["conditions"].values()})}
+    return {"schema_version": "1.0", "experiment_id": EXPERIMENT_ID, "inclusion_sha256": inclusion_hash,
+            "reason": "agent shell environment fix (EL-20261127-034); task inclusion unchanged", "tasks": tasks}
+
+
+def build(inclusion_path: Path = INCLUSION, *, identity: dict | None = None,
+          access_refresh: Path | None = None) -> dict:
     inclusion, inclusion_hash = _read_json(inclusion_path)
     if inclusion.get("amendment_sha256") != AMENDMENT_SHA256:
         raise ContractError("inclusion record is not bound to the approved amendment")
+    refresh = refresh_hash = None
+    if access_refresh is not None:
+        refresh, refresh_hash = _read_json(access_refresh)
+        if (refresh.get("inclusion_sha256"), sorted(refresh.get("tasks", {}))) != (
+                inclusion_hash, sorted(inclusion["included"])):
+            raise ContractError("access refresh is not bound to this inclusion record")
     tasks = {}
     for task_id in inclusion["included"]:
-        entry = inclusion["tasks"][task_id]
+        entry = dict(inclusion["tasks"][task_id])
+        if refresh is not None:
+            entry |= {k: refresh["tasks"][task_id][k] for k in ("access_record", "access_record_sha256")}
         access_path = Path(entry["access_record"])
         record = main_runner.load_access_record(access_path if access_path.is_absolute() else CHECKOUT / access_path,
                                                 sha256=entry["access_record_sha256"], task_id=task_id)
@@ -272,6 +308,8 @@ def build(inclusion_path: Path = INCLUSION, *, identity: dict | None = None) -> 
         "amendment": {"id": "AMD-01", "decision": "DL-031", "sha256": AMENDMENT_SHA256},
         "inclusion": {"path": _display(inclusion_path), "sha256": inclusion_hash, "min_tasks": MIN_TASKS,
                       "excluded": {t: v["reasons"] for t, v in inclusion["tasks"].items() if not v["included"]}},
+        "access_refresh": None if refresh is None else {"path": _ref(access_refresh), "sha256": refresh_hash,
+                                                        "reason": refresh["reason"]},
         "scope": {"plan": "Emergency (exploratory)", "conditions": [c.value for c in Condition], "repetitions": 1,
                   "checkpoint": "conditional (AMD-01 §7.2), separate experiment ID", "ablation": "NOT_RUN"},
         "tasks": tasks,
@@ -308,7 +346,10 @@ def write(path: Path = FREEZE, inclusion: Path = INCLUSION, **kwargs) -> tuple[P
 
 def reproduce(path: Path = FREEZE, inclusion: Path = INCLUSION, *, identity: dict | None = None) -> tuple[bool, dict]:
     data = read_regular(path)[0]
-    return render(build(inclusion, identity=identity)) == data, json.loads(data)
+    stored = json.loads(data)
+    refresh = (stored.get("access_refresh") or {}).get("path")
+    refresh_path = None if refresh is None else (Path(refresh) if Path(refresh).is_absolute() else CHECKOUT / refresh)
+    return render(build(inclusion, identity=identity, access_refresh=refresh_path)) == data, stored
 
 
 def validate_for_execution(path: Path = FREEZE, approval: Path = APPROVAL, *, inclusion: Path | None = None,
@@ -355,6 +396,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--include", action="store_true", help="decide AMD-01 inclusion from the three reports")
+    mode.add_argument("--refresh-access", action="store_true",
+                      help="bind the latest re-checked access records (results/g2-preparation/amd01-v2)")
     mode.add_argument("--write", action="store_true", help="(re)generate the freeze manifest")
     mode.add_argument("--check", action="store_true", help="regenerate and compare with the saved manifest")
     mode.add_argument("--status", action="store_true", help="list unmet lock conditions")
@@ -381,8 +424,13 @@ def main() -> int:
             print("AMD01_INCLUSION", record["status"], f"{len(record['included'])}/{len(CANDIDATES)}",
                   sha256_bytes(INCLUSION.read_bytes()))
             return 0 if record["status"] == "READY" else 1
+        if args.refresh_access:
+            data = canonical_json_bytes(refresh_access())
+            ACCESS_REFRESH.write_bytes(data)
+            print("MAIN_ACCESS_REFRESHED", _display(ACCESS_REFRESH), sha256_bytes(data))
+            return 0
         if args.write:
-            path, digest = write()
+            path, digest = write(access_refresh=ACCESS_REFRESH if ACCESS_REFRESH.exists() else None)
             print("MAIN_FREEZE_WRITTEN", _display(path), digest)
         elif args.check:
             same, _ = reproduce()

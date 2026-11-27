@@ -12,7 +12,9 @@ from benchmarks.smoke import live_dev01
 
 
 # permission_settings_hash of every condition in main-s03-access-20261127-030416 (EL-20261127-020).
-LOGGED_HASH = "de14ca4ee0a1d7a5e995808df347a370ccb1bc011a61745d506a5c258f49356d"
+RECORD_HASH_EL020 = "de14ca4ee0a1d7a5e995808df347a370ccb1bc011a61745d506a5c258f49356d"
+# Normalized settings after the agent shell environment fix (EL-20261127-034).
+LOGGED_HASH = "74e24628b3c06fd3ddd975fe8e57c04b8ef3848eb9981074cfdbe1f2a214c44b"
 # initial_snapshot_id of every condition in the same record.
 LOGGED_SNAPSHOT = "cef3a2987cb5fb0f1de8d1bdc6f32ae3fc2b41b3732d36a180b1caae752c8210"
 
@@ -60,7 +62,9 @@ def test_pinned_access_record_matches_when_present():
     if not main_runner.ACCESS_RECORD.exists():
         pytest.skip("results/ is local and access restricted")
     record = main_runner.load_access_record()
-    assert {entry["permission_settings_hash"] for entry in record["conditions"].values()} == {LOGGED_HASH}
+    assert {entry["permission_settings_hash"] for entry in record["conditions"].values()} == {RECORD_HASH_EL020}
+    # The pre-fix record no longer matches the live settings, so the runner refuses it.
+    assert RECORD_HASH_EL020 != LOGGED_HASH
 
 
 def test_matching_record_prepares_a_to_e_without_agent_turns(tmp_path, operator_path):
