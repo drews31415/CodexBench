@@ -258,8 +258,8 @@ python -m pytest -q tests/integration/test_main_live.py tests/integration/test_m
 4. 개발 측이 편입 결정 → 동결 → 승인 파일 → `--status` → 실행 순서로 진행한다.
 
 ```powershell
-cd C:\Users\dldls\OneDrive\Code\AAH-Main-curator-kits
-$repo = 'C:\Users\dldls\OneDrive\Code\codexbench'
+cd C:\path\to\AAH-Main-curator-kits
+$repo = 'C:\path\to\codexbench'
 $env:PYTHONPATH = "$repo\src;$repo"
 python -m evaluation.amd01_curator evaluate --kits . --dev-report "$repo\results\g2-preparation\amd01\objective-dev.json" --output "$repo\results\g2-preparation\amd01\curator-report.json"
 # 리뷰 세션 종료 후
@@ -316,8 +316,8 @@ python -m evaluation.amd01_curator reviews --kits . --output "$repo\results\g2-p
 **운영자 실행 순서**
 
 ```powershell
-cd C:\Users\dldls\OneDrive\Code\AAH-Main-curator-kits
-$repo = 'C:\Users\dldls\OneDrive\Code\codexbench'
+cd C:\path\to\AAH-Main-curator-kits
+$repo = 'C:\path\to\codexbench'
 $env:PYTHONPATH = "$repo\src;$repo"
 $out = "$repo\results\g2-preparation\amd01"
 # 1. S02 키트를 키트 루트로 복사 (1차에서 빠졌던 과제)
@@ -367,8 +367,8 @@ python -m benchmarks.main_public.main_freeze --include --dev-report results\g2-p
 **3차 운영자 실행 순서**
 
 ```powershell
-cd C:\Users\dldls\OneDrive\Code\AAH-Main-curator-kits
-$repo = 'C:\Users\dldls\OneDrive\Code\codexbench'
+cd C:\path\to\AAH-Main-curator-kits
+$repo = 'C:\path\to\codexbench'
 $env:PYTHONPATH = "$repo\src;$repo"
 $out = "$repo\results\g2-preparation\amd01"
 python -m evaluation.amd01_curator hashes --kits . --output "$out\kit-hashes-before-fix-r3.json"
@@ -426,9 +426,9 @@ python -m benchmarks.main_public.main_freeze --include --dev-report results\g2-p
 **실행 명령 (운영자 PowerShell, Docker Desktop 실행 중, Codex 로그인 상태)**
 
 ```powershell
-cd C:\Users\dldls\OneDrive\Code\codexbench
+cd C:\path\to\codexbench
 $env:PYTHONPATH = "src;."
-python -m benchmarks.main_public.main_schedule --execute --curator-kits C:\Users\dldls\OneDrive\Code\AAH-Main-curator-kits
+python -m benchmarks.main_public.main_schedule --execute --curator-kits C:\path\to\AAH-Main-curator-kits
 ```
 
 ### AMD-01 이행 5단계: 에이전트 셸 결함 수정과 v2 동결
@@ -473,6 +473,8 @@ python -m benchmarks.main_public.main_schedule --execute --curator-kits C:\Users
 - **Pilot 재실행 없음:** Pilot도 셸이 막힌 환경이었다. 정책 시작값은 그 Pilot을 근거로 정해졌지만 Pilot을 다시 하지 않았다.
 - **같은 과제 반복:** v1에서 같은 과제·같은 모델로 40슬롯을 실행했다. v1의 에이전트 출력은 v2에 전달되지 않는다. 다만 운영자와 개발 측은 v1 결과를 이미 봤다.
 
+**실행:** 2026-11-27 운영자 승인(`2af2d58a…`) 뒤 운영자가 실행했고, `MAIN_EXECUTE_RECORDED … evaluated=40/40`이 나왔다. 결과는 [RESULTS_ANALYSIS §2.5](RESULTS_ANALYSIS.md#25-main-주-결과--aah-main-emergency-v2-amd-01-emergency-탐색적)와 EL-20261127-037·038에 있다.
+
 ### AAH-D02 큐레이터 환경 검증
 
 2026-11-27에 운영자가 Docker 평가 통과를 보고했다. 기준본은 기능 FAIL(예상)·회귀 PASS였고, 참조본은 기능·회귀·지시 검사 모두 PASS였다. 운영자 출력은 `CURATOR_DOCKER_PAIR_PASS AAH-D02 d96a468e-2b50-4dd3-bf4f-fa3eb3a7a05f`이다. 비작성자 검토와 Main 승인 절차가 남았다.
@@ -502,7 +504,7 @@ python -m benchmarks.main_public.main_schedule --execute --curator-kits C:\Users
 `results/g2-main-public/AAH-Main-curator-kits.zip`을 저장소 밖에 풀고 `START_HERE.md`를 따른다. 과제별 `reference/`에 참조 구현을 작성하고 `curator_tests/`에 기능·회귀 검사를 작성한다. Docker Desktop을 켜고 과제의 `task.json`이 있는 폴더에서 일반 PowerShell로 실행한다. [작업 묶음 생성기](../../benchmarks/main_public/curator_kit.py)
 
 ```powershell
-$repo = 'C:\Users\dldls\OneDrive\Code\codexbench'
+$repo = 'C:\path\to\codexbench'
 $env:PYTHONPATH = "$repo\src;$repo"
 python -m evaluation.curator_check --kit .
 ```

@@ -177,7 +177,7 @@ DEV-01/02의 기준본·수정본을 각각 고정하고 복원한다. 공개 �
 사용자는 일반 Windows PowerShell에서 Codex MXC 시작 점검의 종료 코드 `0`을 확인했다. 같은 PowerShell에서 다음 명령을 실행하면 최초 한 턴을 시도한다.
 
 ```powershell
-Set-Location 'C:\Users\dldls\OneDrive\Code\codexbench'
+Set-Location 'C:\path\to\codexbench'
 $env:PYTHONPATH = (Resolve-Path src).Path
 python -m benchmarks.smoke.live_dev01 --execute
 ```

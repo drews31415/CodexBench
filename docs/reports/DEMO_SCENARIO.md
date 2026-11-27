@@ -160,21 +160,24 @@ flowchart TD
 
 Replay는 새 모델 호출이나 추가 복구가 아니다. 발표 현장에서 실행한 별도 run은 Main 표본으로 합치지 않는다. Replay는 원래 run 결과가 실패·부분 종료인 경우에도 그 상태를 그대로 표현한다.
 
-### 5.3. 케이스 등록표 (실제 확인 후 작성)
+### 5.3. 케이스 등록표 (2026-11-27 등록, `aah-main-emergency-v2`)
 
 | 항목 | 대표 복구 케이스 | 정상/부정적 케이스 |
 | --- | --- | --- |
-| task ID / family / source | — | — |
-| 선정 규칙 및 선정 근거 | — | — |
-| experiment / slot / run ID | — | — |
-| checkpoint / source run ID (해당 시) | — | — |
-| 조건 / 모델 ID / runtime / config hash | — | — |
-| 초기 commit / snapshot hash / 환경 | — | — |
-| session policy / 잔여 실행 제한 | — | — |
-| trigger / evidence / intervention / package refs | — | — |
-| 종료 이유 / public check / 평가 분석 상태 | — | — |
-| 비용·시간·사용량 coverage | — | — |
-| 실제 artifact ref / 공개 승인 | — | — |
+| task ID / family / source | AAH-D02 / order-cancel-reservation-identity / 자체(OWN) | AAH-D04 / schedule-rehydrate-due-tick / 자체(OWN) |
+| 선정 규칙 및 선정 근거 | 첫 턴 공개 검사 실패 → 복구 1회 → 독립 PASS. v2에서 복구 후 성공한 4건(B·C의 D02·D04) 중 slot 순서가 가장 앞선 사례 | "A/B 성공–E 실패" 유형의 유일한 사례(A·B·C·D 성공, E 실패) |
+| experiment / slot / run ID | `aah-main-emergency-v2` / slot-0012 / `60828887-df4f-4a6c-b2e2-68c28d7dd814` | `aah-main-emergency-v2` / slot-0017 / `6dbae23e-f630-4457-9fb3-6f7da060cc87` |
+| checkpoint / source run ID (해당 시) | 해당 없음 (E2E) | 해당 없음 (E2E) |
+| 조건 / 모델 ID / runtime / config hash | B / `gpt-6-luna` low / Codex CLI 0.166.0 / run manifest `458e570c…`, 동결 `5ef565bd…` | E / 같음 / 같음 / run manifest `bac9594a…`, 동결 `5ef565bd…` |
+| 초기 commit / snapshot hash / 환경 | 공개 기준본 `2f54b3da…` / MXC `aah_dev01_mxc`, 권한 해시 `74e24628…` | 공개 기준본 `592ff436…` / 같음 |
+| session policy / 잔여 실행 제한 | SAME_SESSION / 복구 2회 중 1회 사용 | SAME_SESSION / 복구 2회 중 1회 사용 뒤 중복 체크포인트로 종료 |
+| trigger / evidence / intervention / package refs | 공개 기능 검사 실패 → FLAT 진단 → `GENERIC_RETRY` → DEFAULT 복구 패키지 / `intervention-0001` | 공개 기능 검사 실패 → GRAPH 진단 → `GENERIC_RETRY`(유형별 전략 대신 일반 전략) → DCC 복구 패키지 / `intervention-0001` |
+| 종료 이유 / public check / 평가 분석 상태 | COMPLETED / PASS / VALID_SUCCESS | NO_SAFE_CONTINUATION / FAIL / VALID_FAILURE. 셸 인용 오류로 파일 쓰기가 두 번 다 실행되지 않음 |
+| 비용·시간·사용량 coverage | 모델 토큰 100,765, 46.0초, observed | 모델 토큰 97,556, 51.1초, observed |
+| 실제 artifact ref / 공개 승인 | `results/main-live/aah-main-emergency-v2/runs/60828887-…/` / 공개 승인(OD-16) 없음. 내부 LOG REPLAY만 | `results/main-live/aah-main-emergency-v2/runs/6dbae23e-…/` / 같음 |
+
+- **유형별 해당 여부:** "모든 조건 실패" 유형은 AAH-S02(5조건 모두 공개 PASS·독립 FAIL)다. "A/B 실패–E 성공" 유형은 v2에 없다. A가 실패한 C03에서 B도 성공했다.
+- **공개 범위:** 원시 로그에는 로컬 경로가 들어 있다. 공개 시연 전에 비식별화와 OD-16 승인이 필요하다.
 
 ## 6. 비교 시연 구성 (슬라이드 5–6, 135초)
 
@@ -310,29 +313,35 @@ B–E를 2×2 요인으로 분석한다. A는 외부 개입이 없는 실용적 
 
 슬라이드에 그래프를 과밀하게 넣지 않는다. 필요한 경우 슬라이드 7을 7a–7c로 나누되 시간 합계를 유지한다. 실측 자료가 충분하지 않으면 미수행 그래프를 생략하고 수행 현황과 한계를 설명한다.
 
-### 8.3. 결과표 (G4 이후 등록)
+### 8.3. 결과표 (`aah-main-emergency-v2`, 탐색적, G4 교차 검토 없음)
 
 | 지표 | A | B | C | D | E |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| E2E 유효 실행 수 | — | — | — | — | — |
-| E2E 성공 수 / 분모 | — | — | — | — | — |
-| E2E 성공률 | — | — | — | — | — |
-| 공통 checkpoint FRR | N/A | — | — | — | — |
-| 성공당 모델 토큰 | — | — | — | — | — |
-| 전체 관측 모델 토큰 | — | — | — | — | — |
-| 실행 시간 중앙값 | — | — | — | — | — |
-| 필수 지침 준수율 | — | — | — | — | — |
-| 개입 뒤 공개 검사 악화 | N/A | — | — | — | — |
+| E2E 유효 실행 수 | 8 | 8 | 8 | 8 | 8 |
+| E2E 성공 수 / 분모 | 6/8 | 7/8 | 7/8 | 7/8 | 6/8 |
+| E2E 성공률 | 75.0% | 87.5% | 87.5% | 87.5% | 75.0% |
+| 공통 checkpoint FRR | N/A | NOT_RUN | NOT_RUN | NOT_RUN | NOT_RUN |
+| 성공당 모델 토큰 | 79,965 | 63,074 | 68,864 | 58,176 | 71,749 |
+| 전체 관측 모델 토큰 | 479,792 | 441,516 | 482,045 | 407,235 | 430,493 |
+| 실행 시간 (평균, 중앙값 미집계) | 32.4초 | 30.4초 | 33.3초 | 28.3초 | 30.8초 |
+| 필수 지침 준수율 | 100% | 100% | 100% | 100% | 100% |
+| 개입 뒤 공개 검사 악화 | N/A | 미집계 | 미집계 | 미집계 | 미집계 |
+
+발표에서는 다음 순서로 설명한다(§8.5 "실험 미완료 또는 결측 과다"·"그래프/전략 효과 불명" 행).
+1. v1 무효와 그 발견 과정
+2. v2 결과에서 조건 간 차이가 슬롯 2개에서만 생겼다는 점
+3. AAH-S02 한 과제가 실패 7건 중 5건이라는 점
+4. 천장 효과
 
 공통 paired 분석 집합과 전체 유효 실행은 별도 표로 유지한다. FRR은 E2E에서 조건마다 자연적으로 발생한 실패를 분모로 계산하지 않고 공통 실패 체크포인트 분석 집합에서 평가한다. 적격 source 확보율과 비용은 분기 FRR 및 비용과 별도로 보고한다.
 
 | 주 분석 대비 | 결과 | 95% 구간 | 공통 단위/coverage | 해석 |
 | --- | --- | --- | --- | --- |
-| P-R1: CPS_C − CPS_B (E2E 성공당 모델 토큰) | — | — | — | — |
-| P-R2: FRR_D − FRR_B (공통 실패 상태) | — | — | — | — |
-| P-R3: p_E − max(p_C,p_D) (E2E 성공률) | — | — | — | — |
-| 보조: A→E 성공률·비용 | — | — | — | — |
-| 보조: p_E − p_D − p_C + p_B (가법 상호작용) | — | — | — | — |
+| P-R1: CPS_C − CPS_B (E2E 성공당 모델 토큰) | +5,790 토큰 | [−6,515, +20,406] | 8과제·8군집 / 8/8 | 결론 불충분 |
+| P-R2: FRR_D − FRR_B (공통 실패 상태) | NOT_RUN | — | — | 미평가 |
+| P-R3: p_E − max(p_C,p_D) (E2E 성공률) | −12.5%p | 없음 | 8과제 | 결론 불충분 (슬롯 1개 차이) |
+| 보조: A→E 성공률·비용 | 0%p, 성공당 −8,216.5 토큰 | [−37.5, +37.5]%p | 8과제 | 결론 불충분 |
+| 보조: p_E − p_D − p_C + p_B (가법 상호작용) | −12.5%p | [−37.5, 0]%p | 8과제 | 결론 불충분 |
 
 P-R3의 양의 결과가 곧 양의 상호작용을 의미하지 않는다. 세 주 대비의 결과와 단독 비교를 구분하고, 연구 질문의 성공 기준을 사후 변경하지 않는다. 성공률 차이는 %p, 상대 변화는 %로 구별한다. 비용은 모델 토큰, 실제 과금액, 추정 과금액, 구독 크레딧, 로컬 시간/오버헤드의 단위를 섞지 않는다. CPS는 실패 실행의 비용까지 포함하고 성공이 0건이면 유한한 수치로 표시하지 않는다.
 

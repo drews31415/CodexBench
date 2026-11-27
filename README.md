@@ -6,7 +6,7 @@
 
 잇츠 스터디 5기 · Codex 기반 AI 코딩 에이전트 구축
 
-> **Project status — G0·G1 통과 · S5 Dev Pilot 25/25 평가 · G2 사전 검증** (2026-11-27)
+> **Project status — G0·G1 통과 · Main Emergency v2 40/40 실행·판정 · 결과는 탐색적(결론 불충분)** (2026-11-27)
 >
 > DEV-01에서 실제 Codex 실행과 독립 Docker 판정을 확인했습니다. Dev 런타임·격리 검증과 한시 Dev Smoke 공동 승인 확인을 기록해 G0를 통과했습니다. [G0 재판정](docs/reports/S0_VERIFICATION.md#g0-재판정)
 >
@@ -18,9 +18,13 @@
 >
 > S4에서는 실제 DEV-01의 첫 턴 실패 후 E가 복구를 전달하는 과정을 확인했고, A–E 다섯 실행의 독립 Docker 판정을 검증했습니다. LT02와 LT04가 통과했습니다. 합성 체크포인트에서 B–E가 최초 턴을 반복하지 않고 분기하는 것도 확인했습니다. [S4 검증 기록](docs/reports/S4_VERIFICATION.md)
 >
-> S5 Dev Pilot은 과제 5개에서 A–E 25슬롯을 모두 실행했습니다. 독립 Docker 평가는 18건 PASS, 7건 FAIL이었고 실제 후속 복구 턴 8건을 확인했습니다. [S5 Pilot 실환경 결과](docs/reports/S5_PILOT_PREPARATION.md#pilot-실환경-결과)
+> S5 Dev Pilot은 과제 5개에서 A–E 25슬롯을 모두 실행했습니다. 독립 Docker 평가는 18건 PASS, 7건 FAIL이었고 실제 후속 복구 턴 8건을 확인했습니다. 다만 사후 검토에서 Pilot의 에이전트 셸 명령이 모두 실행되지 않았던 것이 드러났습니다(아래 v1 참고). [S5 Pilot 실환경 결과](docs/reports/S5_PILOT_PREPARATION.md#pilot-실환경-결과)
 >
-> G2 검토용으로 Main 후보 8개의 공개 기준본과 기능·회귀 검사를 검증했습니다. 독립 평가와 비작성자 리뷰를 마친 Main 후보는 0개입니다. [G2 사전 검증](docs/reports/G2_PREPARATION.md)
+> **Main (AMD-01 Emergency, `aah-main-emergency-v2`):** 8과제 × A–E × 1회, 40슬롯을 실행하고 독립 판정했습니다. 과제 평균 성공률은 A 75%, B·C·D 87.5%, E 75%입니다. 사전 지정 대비 P-R3는 −12.5%p, P-R1은 +5,790토큰(95% 구간 −6,515~+20,406)이고, 모든 가설 판단은 **결론 불충분**입니다. 체크포인트(P-R2)와 ablation은 수행하지 않았습니다. [Main 결과](docs/reports/RESULTS_ANALYSIS.md#25-main-주-결과--aah-main-emergency-v2-amd-01-emergency-탐색적)
+>
+> 첫 Main 실행(v1)은 에이전트 셸 명령이 샌드박스 환경 변수 결함으로 모두 실행되지 않아 무효 처리했습니다. 결함을 고친 뒤 v2로 다시 실행했습니다. [v1 무효 사유](docs/reports/RESULTS_ANALYSIS.md#24-main-실측-결과--aah-main-emergency-v1-amd-01-emergency-탐색적)
+>
+> Main 평가 과제는 사람 동료 리뷰(BQ14)를 받지 않았다. 사전 등록한 수정 프로토콜 AMD-01(DL-031)에 따라 독립 AI 리뷰와 객관적 검사(대안 구현·불완전 수정 검출·반복·격리)를 통과한 과제만 편입했다. 승인은 1인이 RH·GR·CE를 겸임해 수행했다. 규모는 Emergency(최대 8과제 × A–E × 1회)이며 모든 결과는 탐색적이다.
 
 [프로젝트 소개](#프로젝트-소개) · [아키텍처](#아키텍처) · [사용-계획](#사용-계획) · [실험-설계](#실험-설계) · [개발-및-기여](#개발-및-기여) · [문서-인덱스](#문서-인덱스)
 
@@ -287,26 +291,28 @@ B–E에서 감지 조건, 복구 기회, 허용 원천 증거, 필수 지침, �
 
 ## 연구 진행 상태
 
-현재 S0 개발 검증을 진행 중입니다. 다음 표는 향후 실험에서 측정할 지표를 표시합니다.
+Main Emergency 실험 `aah-main-emergency-v2`의 결과입니다(동결 `5ef565bd…`, 8과제 × 1회, `gpt-6-luna` low). 모든 값은 탐색적입니다.
 
 | 지표 | A | B | C | D | E |
 | --- | --- | --- | --- | --- | --- |
-| Main Task Success Rate | — | — | — | — | — |
+| Main Task Success Rate | 75.0% (6/8) | 87.5% (7/8) | 87.5% (7/8) | 87.5% (7/8) | 75.0% (6/8) |
 | Checkpoint Recovery Rate | N/A | — | — | — | — |
-| End-to-end Cost per Success (tokens) | — | — | — | — | — |
-| Runtime Wall Time | — | — | — | — | — |
-| Instruction Compliance | — | — | — | — | — |
+| End-to-end Cost per Success (tokens) | 79,965 | 63,074 | 68,864 | 58,176 | 71,749 |
+| Runtime Wall Time (평균) | 32.4초 | 30.4초 | 33.3초 | 28.3초 | 30.8초 |
+| Instruction Compliance | 100% | 100% | 100% | 100% | 100% |
 
-`—`는 미측정, `N/A`는 해당 프로토콜에 배정되지 않음을 뜻합니다. 0이나 실패를 의미하지 않습니다. 추후 고정된 실험 manifest, 유효·결측 표본 수, 비용 회계 범위, 신뢰구간과 함께 실제 결과를 추가합니다.
+- **표기:** `—`는 미측정(체크포인트 프로토콜 NOT_RUN), `N/A`는 해당 프로토콜에 배정되지 않음을 뜻합니다.
+- **실패의 분포:** 실패 7건 중 5건은 AAH-S02 한 과제가 다섯 조건 모두에서 실패한 것입니다. 그 밖의 조건 간 차이는 슬롯 2개에서만 생겼고, 대부분의 과제는 외부 보조 없는 A로도 풀렸습니다.
+- **구간과 판단:** 신뢰구간과 대비는 [RESULTS_ANALYSIS §2.5](docs/reports/RESULTS_ANALYSIS.md#25-main-주-결과--aah-main-emergency-v2-amd-01-emergency-탐색적)에 있습니다. 이 결과는 AAH의 효과를 지지하지도 반박하지도 않습니다.
 
 | 게이트 | 승인 목표 | 현재 확인 상태 |
 | --- | --- | --- |
 | G0 | 실제 Codex 실행, runtime probe, 격리, 독립 평가 | 통과 · [판정과 근거](docs/reports/S0_VERIFICATION.md#g0-재판정) |
 | G1 | 통합 MVP 및 A–E 정책 격리 | 통과 · [실행 및 승인 기록](docs/reports/S4_VERIFICATION.md#증거-경로-및-g1-상태) |
-| G2 | Pilot, 과제 품질 검증 및 실험 동결 | Main 공개 기준본 8개 검증 · 독립 평가, 리뷰 및 동결 대기 |
-| G3 | 본실험 및 체크포인트 기록 확보 | 미실행 |
-| G4 | 분석, 비용 회계 및 한계 검토 | 미실행 |
-| G5 | 제출 패키지, 실제 사례 replay 및 재현 안내 | 미완료 |
+| G2 | Pilot, 과제 품질 검증 및 실험 동결 | 수정 기준(AMD-01)으로 충족 · 8과제 편입, v2 동결·승인 · [G2 기록](docs/reports/G2_PREPARATION.md) |
+| G3 | 본실험 및 체크포인트 기록 확보 | v2 40/40 기록 (v1 무효 보존) · 체크포인트 NOT_RUN |
+| G4 | 분석, 비용 회계 및 한계 검토 | 분석·바이트 재현 완료 · 교차 검토자 없음(부분) |
+| G5 | 제출 패키지, 실제 사례 replay 및 재현 안내 | 보고서·README 갱신 · 공개 범위 검토와 시각화는 남음 |
 
 현재의 문서 준비 상태는 게이트 통과를 의미하지 않습니다. 구현 증거와 평가 결과를 확보한 후 갱신합니다.
 

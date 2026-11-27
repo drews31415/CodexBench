@@ -10,13 +10,15 @@
 | 수행 맥락 | 잇츠 스터디 5기 · Codex 기반 AI 코딩 에이전트 구축 |
 | 연구 유형 | 실험적 시스템 연구 및 통제된 비교 실험 |
 | 연구 대상 | 단일 OpenAI Codex 에이전트, Python 저장소의 테스트 가능한 버그 수정 |
-| 작성일 | 2026-11-25 |
-| 문서 버전 | v0.1.0 — 연구보고서 사전 작성본 |
+| 작성일 | 2026-11-25 (실측 반영 2026-11-27) |
+| 문서 버전 | v0.2.0 — Main(Emergency) 실측 반영본 |
 | 저자 및 소속 | 팀 확인 후 기입 |
-| 상태 | 연구 설계 종합 완료본 — 실제 구현, 실험, 결과 및 최종 승인 증거 미등록 |
-| 최종 승인 | G4 분석 검토 및 G5 제출 승인 이후 확정 |
+| 상태 | 구현·Dev 검증·Main Emergency 실험(v2) 완료. 결과는 탐색적이며 가설 판단은 결론 불충분 |
+| 최종 승인 | 운영자 1인(RH·GR·CE 겸임). G4 교차 검토자 없음 |
 
-> **읽기 안내:** 파일명은 최종 보고서이지만 현재 버전은 실험 전 작성 가능한 배경·관련 연구·제안 방법·평가 설계를 종합한 초안이다. 구현 사실, 실측값, 가설 판정과 최종 결론은 실제 증거가 확보된 후 작성한다. 표에서 `—`는 미등록을 뜻하며 0, 실패 또는 통계적 비유의를 뜻하지 않는다. 설계 예시와 계획 실행 수는 실험 결과가 아니다.
+> **읽기 안내:** 이 버전은 2026-11-27 Main Emergency 실험 `aah-main-emergency-v2`의 실측 결과를 반영한다. 1–4장과 6–7장은 사전 설계이고, 실측과 해석은 5·8–10장에 있다. 실험 원자료와 세부 표는 [RESULTS_ANALYSIS.md](RESULTS_ANALYSIS.md#25-main-주-결과--aah-main-emergency-v2-amd-01-emergency-탐색적)를 기준으로 한다. 표의 `—`는 미등록을 뜻하며 0, 실패 또는 통계적 비유의를 뜻하지 않는다.
+>
+> Main 평가 과제는 사람 동료 리뷰(BQ14)를 받지 않았다. 사전 등록한 수정 프로토콜 AMD-01(DL-031)에 따라 독립 AI 리뷰와 객관적 검사(대안 구현·불완전 수정 검출·반복·격리)를 통과한 과제만 편입했다. 승인은 1인이 RH·GR·CE를 겸임해 수행했다. 규모는 Emergency(최대 8과제 × A–E × 1회)이며 모든 결과는 탐색적이다.
 
 ---
 
@@ -26,13 +28,13 @@
 
 AAH는 저장소의 구조적 관계를 나타내는 Repository Graph와 에이전트의 관측 가능한 행동·결과를 나타내는 Execution Graph를 연결한다. 공통 실패 감지 정책에 의해 개입 조건이 충족되면 실패 앵커에서 관련 관계를 탐색하고 후속 복구 전략을 결정한다. Dynamic Context Compiler(DCC)는 최초 실행 및 복구 시점에 작업 관련성, 현재 유효성, 중복 및 토큰 예산을 고려하여 보조 컨텍스트를 구성한다. 실행 결과는 다시 관측되어 다음 제어 판단에 반영되며, 정상 진행에 대한 불필요한 복구 개입은 최소화한다.
 
-제안 방법의 검증을 위해 기본 Codex, 일반 재시도, 컨텍스트 최적화, 그래프 기반 복구, 통합 정책의 다섯 조건을 비교하는 실험을 설계하였다. 공통 실패 체크포인트 평가와 구성 요소 제거 실험을 통해 정책별 효과를 분리하고, 독립 테스트에 기반한 작업 성공률, 실패 복구율, 성공당 비용 및 개입 부작용을 평가할 예정이다. 기존 유사 연구를 고려하여 그래프 및 컨텍스트의 결합 자체를 학술적 최초성으로 주장하지 않고, 동일한 실행 조건에서 복구 전략과 정보 최적화의 추가 가치 및 적용 조건을 검증하는 데 집중한다. 현재 실제 실험 결과는 미등록 상태이며 제안법의 우수성은 확정되지 않았다.
+AAH를 구현하고, 기본 Codex(A), 일반 재시도(B), 컨텍스트 최적화(C), 그래프 기반 복구(D), 통합 정책(E)의 다섯 조건을 같은 모델(`gpt-6-luna`, 추론 강도 low)로 비교했다. 사람 리뷰어를 구할 수 없어 사전 등록한 수정 프로토콜 AMD-01에 따라 AI 리뷰와 객관적 검사를 통과한 8개 과제만 편입했고, 8과제 × 5조건 × 1회 = 40회를 실행해 독립 테스트로 판정했다. 과제 평균 성공률은 A 75%, B·C·D 87.5%, E 75%였다. 통합 정책의 추가 이득(P-R3)은 −12.5%p, C와 B의 성공당 토큰 차(P-R1)는 +5,790토큰(95% 구간 −6,515~+20,406)이었다. 실패 7건 중 5건은 다섯 조건 모두에서 실패한 한 과제였다. 그 밖의 조건 간 차이는 슬롯 2개에서만 생겼고, 대부분의 과제가 외부 보조 없이도 풀려 천장 효과가 있었다. 따라서 모든 가설 판단은 결론 불충분(탐색적 규모)이다. 첫 실행(v1)에서는 에이전트 셸 명령이 샌드박스 환경 변수 결함으로 모두 실행되지 않았다. 이를 실행 후 원시 로그 검토로 발견해 무효 처리하고, 수정한 뒤 다시 실행했다. 그래프와 컨텍스트의 결합 자체를 학술적 최초성으로 주장하지 않는다.
 
 **Keywords:** Coding Agent, Codex, Agent Harness, Graph Engineering, Dynamic Context Engineering, Failure Recovery, Agent Evaluation
 
 ## Abstract (English)
 
-Coding agents can navigate repositories, modify code, and run tests, yet complex dependency structures and dispersed execution evidence may contribute to repeated failures, exploration stagnation, regressions, and unnecessary computational cost. We propose Adaptive Agent Harness (AAH), an external execution framework that preserves the underlying Codex model and its native tools. AAH couples a repository graph with an execution-evidence graph to support failure-anchored diagnosis and recovery strategy selection. A Dynamic Context Compiler constructs bounded auxiliary context at initial execution and recovery boundaries using relevance, validity, redundancy, and budget constraints. An observable feedback loop governs selective intervention and termination. We design a five-condition end-to-end comparison, a common-failure-checkpoint evaluation, and targeted ablations to quantify the separate and combined effects of these policies. Independent functional, regression, and compliance checks determine task success. The primary outcomes are task success, failure recovery, and model-token cost per success. This manuscript is a pre-experiment draft: no empirical improvement, implementation validation, or claim of methodological priority is established.
+Coding agents can navigate repositories, modify code, and run tests, yet complex dependency structures and dispersed execution evidence may contribute to repeated failures, exploration stagnation, regressions, and unnecessary computational cost. We propose Adaptive Agent Harness (AAH), an external execution framework that preserves the underlying Codex model and its native tools. AAH couples a repository graph with an execution-evidence graph to support failure-anchored diagnosis and recovery strategy selection. A Dynamic Context Compiler constructs bounded auxiliary context at initial execution and recovery boundaries using relevance, validity, redundancy, and budget constraints. An observable feedback loop governs selective intervention and termination. We design a five-condition end-to-end comparison, a common-failure-checkpoint evaluation, and targeted ablations to quantify the separate and combined effects of these policies. Independent functional, regression, and compliance checks determine task success. The primary outcomes are task success, failure recovery, and model-token cost per success. We implemented AAH and ran an emergency-scale main experiment (8 tasks × 5 conditions × 1 repetition, `gpt-6-luna`, low reasoning effort). Because no human peer reviewer was available, the main tasks were admitted under a pre-registered amendment (AMD-01) that replaced the human review with an independent AI review and objective checks. Mean task success was 75% (A), 87.5% (B, C, D) and 75% (E). P-R3 was −12.5 pp. P-R1 (C minus B tokens per success) was +5,790 tokens, with a 95% interval of −6,515 to +20,406. Five of the seven failures came from one task that failed under every condition. The remaining condition differences rest on two slots, and most tasks were solved without external assistance, so a ceiling effect limits the comparison. All hypothesis judgements are therefore inconclusive (exploratory scale). In the first run (v1), every agent shell command was refused by the sandbox because of a missing environment variable. A post-run log review found the defect; v1 was invalidated, the defect was fixed and the experiment was rerun (v2). No claim of methodological priority is made.
 
 ---
 
@@ -308,16 +310,18 @@ return the final patch and report
 
 | 모듈 | 설계 책임 | 실제 검증 증거 |
 | --- | --- | --- |
-| Runtime Adapter | Codex 실행·이벤트·후속 턴·사용량 수집 | — |
-| Workspace Manager | 격리 환경, 스냅샷 및 패치 관리 | — |
-| Workflow Orchestrator | 공통 상태 머신, 한도 및 종료 정책 | — |
-| Evidence Ledger | 공개 증거 및 출처의 버전 관리 | — |
-| Graph Service | 이중 그래프, 연결 및 제한 탐색 | — |
-| Diagnosis / Recovery | 공통 감지 및 복구 전략 결정 | — |
-| Context Compiler | DEFAULT와 DCC 패키징 정책 | — |
-| Experiment Runner | 비교군, 실행 스케줄, 체크포인트 분기 | — |
-| Independent Evaluator | 최종 기능·회귀·제약 판정 | — |
-| Reporting / Analysis | 실행 보고, 비용·성공률 분석 및 시각화 | — |
+| Runtime Adapter | Codex 실행·이벤트·후속 턴·사용량 수집 | `src/aah/runtime`, Codex CLI 0.166.0 MXC 경로. [S0](S0_VERIFICATION.md), 라이브 스모크 |
+| Workspace Manager | 격리 환경, 스냅샷 및 패치 관리 | `src/aah/workspace`, isolation 테스트, Main 접근 검사 BQ09·10 8/8 |
+| Workflow Orchestrator | 공통 상태 머신, 한도 및 종료 정책 | `src/aah/workflow`, [S1](S1_VERIFICATION.md) |
+| Evidence Ledger | 공개 증거 및 출처의 버전 관리 | `src/aah/evidence` |
+| Graph Service | 이중 그래프, 연결 및 제한 탐색 | `src/aah/graphs`, [S3](S3_VERIFICATION.md) |
+| Diagnosis / Recovery | 공통 감지 및 복구 전략 결정 | `src/aah/diagnosis`, `src/aah/recovery`, [S3](S3_VERIFICATION.md) |
+| Context Compiler | DEFAULT와 DCC 패키징 정책 | `src/aah/context`, [S2](S2_VERIFICATION.md) |
+| Experiment Runner | 비교군, 실행 스케줄, 체크포인트 분기 | `src/aah/experiments`, `benchmarks/main_public`, [S4](S4_VERIFICATION.md). 라이브 체크포인트 분기는 Main에서 미사용 |
+| Independent Evaluator | 최종 기능·회귀·제약 판정 | `evaluation/`, 고정 Docker worker, 큐레이터 키트 프로세스 분리 |
+| Reporting / Analysis | 실행 보고, 비용·성공률 분석 및 시각화 | `analysis/main_analysis.py`, EP30 바이트 재현. 시각화(FIG) 미작성 |
+
+자동 테스트는 263개가 모두 통과한다(`pytest tests`). 실제 모델 호출 테스트는 일반 CI에 넣지 않았다.
 
 설계 기술은 Python 3.11+, Codex CLI 우선 검증(SDK 대안), Python 상태 머신, AST와 NetworkX MultiDiGraph, BM25, JSON/JSONL/CSV, Git, 검증된 격리 환경 및 pytest이다. 구체 버전과 라이선스는 동결 전 확정한다. 단일 프로세스와 로컬 저장을 우선하고 필요 없는 그래프 DB 또는 워크플로 프레임워크 도입을 지양한다.
 
@@ -333,12 +337,12 @@ return the final patch and report
 
 | 단계 | 역할 및 증거 | 상태 |
 | --- | --- | --- |
-| G0 | 실제 Runtime 연동 및 안전한 평가 | 미등록 |
-| G1 | 통합 MVP, A–E 정책 격리 및 실제 실행 | 미등록 |
-| G2 | Pilot, 정책 및 평가 집합 동결 | 미등록 |
-| G3 | 본실험과 체크포인트 기록 | 미등록 |
-| G4 | 결과 분석 및 교차 검토 | 미등록 |
-| G5 | 재현 안내, 보고서 및 제출 | 미등록 |
+| G0 | 실제 Runtime 연동 및 안전한 평가 | Dev Smoke 실행·독립 판정 기록([S0](S0_VERIFICATION.md)) |
+| G1 | 통합 MVP, A–E 정책 격리 및 실제 실행 | S1–S4 검증 기록. A–E parity(CT03–CT07) 회귀 테스트 유지 |
+| G2 | Pilot, 정책 및 평가 집합 동결 | 수정 기준(AMD-01)으로 충족. Pilot은 셸 결함 환경에서 수행됐고 다시 하지 않음 |
+| G3 | 본실험과 체크포인트 기록 | v2 40/40 기록. v1은 무효 기록으로 보존. 체크포인트 NOT_RUN |
+| G4 | 결과 분석 및 교차 검토 | 분석·재현 완료. 교차 검토자 없음(부분) |
+| G5 | 재현 안내, 보고서 및 제출 | 이 보고서, README, 시연 문서 갱신. 공개 범위 검토는 남음 |
 
 팀 역할은 RH(Runtime & Harness), GR(Graph & Recovery), CE(Context & Evaluation)로 제안되어 있다. 구현 작업 IP01–IP36, 리뷰, 공통 모듈 인수인계 및 개인별 학습 증빙은 `IMPLEMENTATION_PLAN.md`, `TEAM_ROLES.md`, `AGENTS.md`에 따른다. 실제 팀원, 역할 승인과 수행 내역은 증거 확인 후 기입한다.
 
@@ -438,15 +442,15 @@ Pilot, smoke, 개발 호출은 P0/P1 평가 합계와 별도다. 실행 1회가 
 
 | 항목 | 실제 값 / 증거 |
 | --- | --- |
-| FRZ ID 및 manifest hash | — |
-| 모델 및 추론 설정 | — |
-| Codex 런타임 버전 / 인증 유형 | — |
-| 과제·환경·평가기·정책 버전 | — |
-| 토큰 제어 지원 / 공통 시간·실행 단위 상한 | — |
-| Main 과제 수, 반복 수, 실제 계획 슬롯 | — |
-| Checkpoint source 및 eligible 상태 수 | — |
-| 실제 수행 Ablation 항목 | — |
-| 분석 코드·설정 hash / 분석 집합 ID | — |
+| FRZ ID 및 manifest hash | `aah-main-emergency-v2`, `5ef565bd48c3a684cbbf03c3a70687f4bda7f34e3ce5ba5649cc847895142e4a` (v1 `4596afb3…`은 무효) |
+| 모델 및 추론 설정 | `gpt-6-luna`, reasoning effort low, SAME_SESSION |
+| Codex 런타임 버전 / 인증 유형 | Codex CLI 0.166.0, 기존 ChatGPT 구독 로그인, Windows MXC 프로필 `aah_dev01_mxc` |
+| 과제·환경·평가기·정책 버전 | 8과제(AAH-C02·C03·D02·D04·R03·R04·S02·S03), 공개 검사 환경 `f98af066…`, 코드 버전 `2401bc7f…`, 권한 해시 `74e24628…` |
+| 토큰 제어 지원 / 공통 시간·실행 단위 상한 | `observe_only`. 실행당 360초, 네이티브 턴 105초, 최초 1턴 + B–E 복구 최대 2턴, 보조 정보 2,048 추정 토큰 |
+| Main 과제 수, 반복 수, 실제 계획 슬롯 | 8과제 × 5조건 × 1회 = 40슬롯, seed 20261127, 최대 104턴 |
+| Checkpoint source 및 eligible 상태 수 | NOT_RUN (AMD-01 §7.2 조건 미충족) |
+| 실제 수행 Ablation 항목 | 없음 (AB1–AB4 NOT_RUN) |
+| 분석 코드·설정 hash / 분석 집합 ID | `analysis/main_analysis.py`, AMD-01 설정 `7acf6117…`, 완전 블록 8과제 |
 
 ## 7. 평가 및 통계 방법 (Evaluation and Analysis)
 
@@ -507,95 +511,72 @@ P-R3은 점추정과 두 성분 대비를 보고한다. 동률 또는 근접한 
 
 계획 슬롯으로부터 left join을 수행하고 유효한 공통 블록과 지표별 관측 범위를 기록한다. 인프라 결측·미실행·과제 무효 사유와 민감도 분석을 제시한다. 비용 bootstrap에서 성공 0건으로 무정의 CPS가 발생하면 이를 조용히 제거하지 않고 비율을 보고하며, OD-10에서 승인한 무정의 구간 처리만 적용한다. 비열등성은 사전 승인된 허용 손실 폭과 구간을 사용하고, 5%p는 검토 후보일 뿐 확정된 값이 아니다. 비유의 결과를 비열등성 증거로 해석하지 않는다.
 
-## 8. 실험 결과 (Results) — 실측 자료 등록 후 작성
+## 8. 실험 결과 (Results)
 
-**현재 상태: 미평가.** 이 절의 표는 결과 보고 형식이며 실제 값이 아니다. `RESULTS_ANALYSIS.md`의 G4 검토를 마친 결과만 사용한다. 모든 표에 실험 버전, 분석 집합 ID, 단위, 분자·분모, 관측 범위 및 필요한 신뢰구간을 연결한다. Pilot 및 mock 결과는 Main 성과로 합산하지 않는다.
+> Main 평가 과제는 사람 동료 리뷰(BQ14)를 받지 않았다. 사전 등록한 수정 프로토콜 AMD-01(DL-031)에 따라 독립 AI 리뷰와 객관적 검사(대안 구현·불완전 수정 검출·반복·격리)를 통과한 과제만 편입했다. 승인은 1인이 RH·GR·CE를 겸임해 수행했다. 규모는 Emergency(최대 8과제 × A–E × 1회)이며 모든 결과는 탐색적이다.
+
+세부 표, 과제별 판정과 재현 명령은 [RESULTS_ANALYSIS §2.5](RESULTS_ANALYSIS.md#25-main-주-결과--aah-main-emergency-v2-amd-01-emergency-탐색적)를 기준으로 한다. Pilot 결과는 Main에 합산하지 않았다.
 
 ### 8.1. 실제 실험 수행 범위
 
 | 프로토콜 | 예정 슬롯 | 실제 시도 | 유효 성공 | 유효 실패 | 결측·미실행 | 비고 |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Main E2E | — | — | — | — | — | — |
-| Checkpoint source | — | — | — | — | — | 적격 상태 확보 수 별도 |
-| Checkpoint branches | — | — | — | — | — | — |
-| Ablation | — | — | — | — | — | 실제 수행 ID별 분리 |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| Main E2E (v2) | 40 | 40 | 33 | 7 | 0 | 대체 실행 0, 턴 45/104, 복구 5회 |
+| Main E2E (v1, 무효) | 40 | 40 | 20 | 20 | 0 | 에이전트 셸 전면 차단. 연구 질문에 대해 무효 |
+| Checkpoint source | — | 0 | — | — | NOT_RUN | AMD-01 §7.2 조건 1·2 미충족 |
+| Checkpoint branches | — | 0 | — | — | NOT_RUN | — |
+| Ablation | — | 0 | — | — | NOT_RUN | Emergency 생략 |
 
-위 표의 예정 슬롯은 Full 목표가 아니라 실제 동결 manifest 값으로 채운다. source는 최종 패치 성공률보다 적격 상태 발생·선정·미발생의 기록을 우선한다. 대체 시도가 존재하면 실제 시도와 슬롯 수가 달라질 수 있다.
-
-### 8.2. End-to-end 성능 및 효율
+### 8.2. End-to-end 성능 및 효율 (v2)
 
 | 지표 | A | B | C | D | E |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| 유효 실행 수 | — | — | — | — | — |
-| 성공 수 | — | — | — | — | — |
-| TSR (%) | — | — | — | — | — |
-| 필수 지침 준수율 (%) | — | — | — | — | — |
-| 전체 관측 모델 토큰 | — | — | — | — | — |
-| CPS (tokens/success) | — | — | — | — | — |
-| 실제 금액 CPS (지원 시) | — | — | — | — | — |
-| Runtime wall time | — | — | — | — | — |
-| Local overhead | — | — | — | — | — |
-| Usage coverage | — | — | — | — | — |
+| 유효 실행 수 | 8 | 8 | 8 | 8 | 8 |
+| 성공 수 | 6 | 7 | 7 | 7 | 6 |
+| TSR (%) | 75.0 | 87.5 | 87.5 | 87.5 | 75.0 |
+| 필수 지침 준수율 (%) | 100 | 100 | 100 | 100 | 100 |
+| 전체 관측 모델 토큰 | 479,792 | 441,516 | 482,045 | 407,235 | 430,493 |
+| CPS (tokens/success) | 79,965 | 63,074 | 68,864 | 58,176 | 71,749 |
+| 실제 금액 CPS (지원 시) | 미관측 | 미관측 | 미관측 | 미관측 | 미관측 |
+| Runtime wall time (평균) | 32.43초 | 30.44초 | 33.34초 | 28.33초 | 30.81초 |
+| Local overhead | 미집계 | 미집계 | 미집계 | 미집계 | 미집계 |
+| Usage coverage | 8/8 | 8/8 | 8/8 | 8/8 | 8/8 |
 
-조건별 전체 유효 결과와 paired 대비에 사용한 공통 블록 결과는 구분하여 보고한다. 실제 금액이 관측되지 않으면 별도로 추정 금액을 표시하고, 구독 크레딧과 토큰을 임의 환산하지 않는다. 평균·중앙값 및 분포를 함께 제시할 수 있으나 집계 방식을 사전 분석계획에 맞춘다.
+- **판정 분포:** 독립 판정의 회귀 검사와 필수 지침 검사는 40/40 통과했다. 실패 7건은 모두 기능 검사 실패다.
+- **비용:** 구독 크레딧과 토큰을 금액으로 환산하지 않았다. 추가 결제는 0원이다.
 
 ### 8.3. 공통 실패 체크포인트 결과
 
-| 지표 | B | C | D | E |
-| --- | ---: | ---: | ---: | ---: |
-| 공통 유효 체크포인트 수 | — | — | — | — |
-| 최종 복구 성공 수 | — | — | — | — |
-| FRR (%) | — | — | — | — |
-| 1차 개입 후 공개 검사 개선 | — | — | — | — |
-| 분기 실행 모델 토큰 | — | — | — | — |
-| 관측된 전략 수행 비율 | — | — | — | — |
-| Fallback rate | — | — | — | — |
-| 개입 후 공개 검사 악화 | — | — | — | — |
+수행하지 않았다(`NOT_RUN`). 라이브 체크포인트 경로를 동결 전에 합성 검증하지 못했고, 별도 실험 ID와 승인도 없었다. 참고로 v2에서 B 첫 턴의 공개 검사 실패는 8건 중 2건(D02·D04)이다. 측정하지 않았으므로 FRR과 P-R2는 미평가다. 이는 "효과 없음"이 아니다.
 
-함께 보고할 자료: source 시도·적격 발생·선정·복원 수, 실패 유형과 원천 과제 분포, 잔여 예산, 공통 세션 정책, 확보 및 복원 비용, 유효한 분기 결과와 결측 사유.
-
-### 8.4. 주 분석 및 요인 효과
+### 8.4. 주 분석 및 요인 효과 (task family cluster bootstrap 10,000회, 95% percentile)
 
 | 비교 | 효과 크기 | 95% 구간 | 공통 표본 수 | 해석 |
 | --- | --- | --- | --- | --- |
-| P-R1: CPS_C − CPS_B | — | — | — | 미평가 |
-| P-R2: FRR_D − FRR_B | — | — | — | 미평가 |
-| P-R3: p_E − max(p_C,p_D) | — | — | — | 미평가 |
-| E2E A→E 실용 참조 | — | — | — | 미평가 |
-| E2E Context 주효과 | — | — | — | 미평가 |
-| E2E Graph 주효과 | — | — | — | 미평가 |
-| E2E 가법 상호작용 | — | — | — | 미평가 |
+| P-R1: CPS_C − CPS_B | +5,790 토큰 | [−6,515, +20,406] | 8과제 / 8군집 | 결론 불충분 |
+| P-R2: FRR_D − FRR_B | — | — | — | 미평가 (NOT_RUN) |
+| P-R3: p_E − max(p_C,p_D) | −12.5%p | 없음 (승인된 방법 없음) | 8 | 결론 불충분. 성분 E−C −12.5%p, E−D −12.5%p |
+| E2E A→E 실용 참조 | 0%p | [−37.5, +37.5] | 8 | 결론 불충분 |
+| E2E Context 주효과 | −6.25%p | [−18.75, 0] | 8 | 결론 불충분 |
+| E2E Graph 주효과 | −6.25%p | [−18.75, 0] | 8 | 결론 불충분 |
+| E2E 가법 상호작용 | −12.5%p | [−37.5, 0] | 8 | 결론 불충분 |
 
-P-R3의 C→E, D→E 개별 대비와 성공당 비용의 보조 대비도 함께 제시한다. 지표별 분석 집합이 다르면 표에 명시한다. 다중 검정을 수행한 경우 조정 방식과 해당 비교 가족을 기록한다.
+AMD-01에 따라 유의성 검정과 비열등성 판정은 하지 않았다. 보조 대비는 E−B −12.5%p [−37.5, 0], C−B 0, D−B 0이다. 성공률 대비의 음수 점추정은 모두 E의 D04 실패 슬롯 1개에서 나온다.
 
 ### 8.5. Ablation 결과
 
-| ID | 실제 조작 및 검증 | 결과 지표·효과 | 구간 / 표본 | 판단 |
-| --- | --- | --- | --- | --- |
-| AB1 | — | — | — | 미평가 |
-| AB2 | — | — | — | 미평가 |
-| AB3 | — | — | — | 미평가 |
-| AB4 | — | — | — | 미평가 |
-| AB5–AB9 | — | — | — | 미평가; 수행 ID별 행 추가 |
-
-실제 수행하지 않은 항목은 미평가로 유지하고, 동일 원천·전략·예산 등의 조작 검증 실패 시 결과를 구성 요소 효과의 증거로 사용하지 않는다.
+AB1–AB9 모두 수행하지 않았다(`NOT_RUN`, Emergency 생략). 구성 요소별 효과를 주장하지 않는다.
 
 ### 8.6. 사례 및 메커니즘 분석
 
-선정 기준과 전체 결과를 함께 공개하며, 개선 사례 외에도 복구 실패·비용 증가·오개입 사례를 포함한다. 실험 전에는 사례를 채우지 않는다.
+| 기록 항목 | 사례 1: AAH-S02 전 조건 실패 | 사례 2: D04-E 복구 실패 | 사례 3: v1 셸 전면 차단 |
+| --- | --- | --- | --- |
+| 범위 | A–E 5슬롯 | E 1슬롯(복구 1회) | v1 40슬롯 |
+| 관측 | 5건 모두 공개 검사 PASS, 독립 기능 검사 FAIL | 셸 인용 오류로 파일 쓰기 명령이 실행되지 않음. 복구에서도 같은 방식 반복 | 에이전트 셸 명령 167개 모두 MXC launcher 오류. 실패 20건 중 17건이 빈 패치 |
+| 판단 | 비공개 검사가 공개 명세·검사에 드러나지 않은 요구를 할 가능성. 과제 측 사후 검토 대상(결과를 보고 제외하지 않음) | snapshot이 바뀌지 않아 중복 개입 금지로 종료. 그래프 진단과 DCC 패키지는 도구 사용 오류를 바로잡지 못함 | 셸 환경 정책이 SYSTEMROOT를 제거. 사전 격리 검사는 다른 실행 경로라 결함을 못 잡음 |
+| 후속 조치 | 큐레이터 측 검사 재검토 권고 | 해당 없음(관측 기록) | 정책 수정, 검사 경로 일치, 실행 중 자동 중단 추가 후 v2 실행 |
 
-| 기록 항목 | 사례 1 (개선 후보) | 사례 2 (실패/악화 후보) |
-| --- | --- | --- |
-| task/run/checkpoint/intervention ID | — | — |
-| 실제 공개 실패와 트리거 | — | — |
-| 그래프 경로·출처·원인 후보 | — | — |
-| 선택 전략과 비교군의 행동 | — | — |
-| DCC 선택·제외 근거와 토큰 | — | — |
-| 후속 공개 검사 및 독립 판정 | — | — |
-| 비용 및 추가 개입 | — | — |
-| 가능한 설명 및 반대 근거 | — | — |
-
-시각화는 `RESULTS_ANALYSIS.md`의 FIG01–FIG10 계약을 따른다. 성공률·복구율, 불확실성, 상호작용, 비용 대비 성능, 오버헤드, 구성 요소 제거 및 실패 복구 사례를 실제 산출물에 연결한다. 데이터 없이 설명용 수치를 성과 그림으로 사용하지 않는다.
+C03-A는 에이전트가 원인을 정확히 설명한 뒤 편집 없이 턴을 끝낸 사례다. A에는 복구가 없어 빈 패치로 실패했다. 시각화(FIG01–FIG10)는 작성하지 않았다.
 
 ## 9. 논의 (Discussion) — 해석 계획 및 한계
 
@@ -603,12 +584,12 @@ P-R3의 C→E, D→E 개별 대비와 성공당 비용의 보조 대비도 함�
 
 | 질문 | 해석에 필요한 근거 | 현재 판단 |
 | --- | --- | --- |
-| RQ1/H1 | 성공당 모델 토큰 차이와 성공률·준수율, 비용 관측 범위 | 미평가 |
-| RQ2/H2 | 공통 실패 상태의 B→D, C→E 복구율 차이 | 미평가 |
-| RQ3/H3 | E가 두 단독 정책을 넘는지, 비용 및 별도 상호작용 | 미평가 |
-| RQ4/H4 | 실제 수행한 AB1–AB9 및 정책 격리 검증 | 미평가 |
-| RQ5 | 사전 층화, 개입 기록, 악화 및 비용 분석 | 미평가 |
-| 실용성 | A→E 성능과 시간·비용, 실제 CLI 사용 증거 | 미평가 |
+| RQ1/H1 | 성공당 모델 토큰 차이와 성공률·준수율, 비용 관측 범위 | 결론 불충분 (P-R1 +5,790토큰, 구간이 0 포함) |
+| RQ2/H2 | 공통 실패 상태의 B→D, C→E 복구율 차이 | 미평가 (체크포인트 NOT_RUN) |
+| RQ3/H3 | E가 두 단독 정책을 넘는지, 비용 및 별도 상호작용 | 결론 불충분 (P-R3 −12.5%p, 슬롯 1개 차이) |
+| RQ4/H4 | 실제 수행한 AB1–AB9 및 정책 격리 검증 | 미평가 (ablation NOT_RUN). 정책 격리는 테스트로 유지 |
+| RQ5 | 사전 층화, 개입 기록, 악화 및 비용 분석 | 결론 불충분 (복구 5회, 표본 부족) |
+| 실용성 | A→E 성능과 시간·비용, 실제 CLI 사용 증거 | 결론 불충분 (A와 E 모두 75%) |
 
 효과 추정치와 불확실성 및 타당성에 근거하여 `지지`, `부분 지지`, `반대 방향 근거`, `결론 불충분`, `미평가`를 구분한다. 통계적 비유의 또는 작은 점추정 차이를 효과 없음의 증명으로 해석하지 않는다.
 
@@ -636,7 +617,15 @@ P-R3의 C→E, D→E 개별 대비와 성공당 비용의 보조 대비도 함�
 | 방법론 한계 | AST의 동적 의존성 누락, 그래프 탐색 제한, 정보 유효성 오판 | 추정 관계 표기, 유효성 불확실 상태, fallback 및 실패 사례 보고 |
 | 신규성 한계 | 유사한 기존 시스템과의 중복 및 직접 비교 미수행 | 문헌 비교와 실제 수행한 ablation에 근거해 주장 범위 제한 |
 
-실험 후에는 위 예상 한계 중 실제 발생한 사항과 그 영향을 증거 기반으로 갱신한다. 격리 또는 평가 유출 문제가 확인되면 단순한 성능 저하가 아니라 연구 타당성 훼손으로 보고한다.
+**실제 발생한 타당성 문제 (2026-11-27)**
+
+1. **실행 환경 결함 (v1·Pilot):** 에이전트 셸 명령이 모두 실행되지 않았다. 원인은 셸 환경 정책 `inherit="none"`이 SYSTEMROOT를 제거한 것이다. 사전 격리 검사는 이 정책이 없는 다른 경로로 실행돼 통과했다. 실행 후 원시 로그 검토에서 발견했다. v1은 무효로 처리했고, Pilot 수치도 같은 환경의 기록이다. 정책을 고치고, 검사 경로를 실제 에이전트 경로와 맞추고, 실행 중 자동 중단을 추가한 뒤 v2를 실행했다. [세부](RESULTS_ANALYSIS.md#24-main-실측-결과--aah-main-emergency-v1-amd-01-emergency-탐색적)
+2. **Pilot 미재실행과 v1 열람:** v2 전에 Pilot을 다시 하지 않았다. 운영자와 개발 측은 v1 결과를 본 상태에서 v2를 실행했다. 다만 바뀐 것은 셸 환경과 접근 기록뿐이다.
+3. **과제 검토:** 사람 동료 리뷰 없이 AMD-01 AI 리뷰로 대체했다. 검사 수정자와 리뷰어가 모두 `claude-opus-5-5`였고, 이는 변형본을 작성한 개발 세션과 같은 모델이다. 8과제 중 5과제는 비공개 검사를 1회 고친 뒤 편입됐다. AAH-S02는 v2에서 다섯 조건 모두 공개 PASS·비공개 FAIL이었다.
+4. **규모와 천장 효과:** 8과제 × 1회이고, 8과제 중 6과제가 A로도 첫 턴에 풀렸다. 조건 간 효과를 구분할 검정력이 사실상 없다.
+5. **승인 구조:** 1인이 RH·GR·CE를 겸임했고, G4 교차 검토자가 없다.
+
+격리 위반이나 평가 유출은 확인되지 않았다. 접근 검사 8/8 PASS, 독립 판정의 manifest 해시 일치, 큐레이터 자료가 개발 측으로 전달되지 않았음이 근거다.
 
 ### 9.4. 실용적 적용과 확장
 
@@ -646,16 +635,16 @@ P-R3의 C→E, D→E 개별 대비와 성공당 비용의 보조 대비도 함�
 
 본 연구는 코딩 에이전트의 작업 수행 과정에서 필요한 정보와 후속 행동을 외부에서 적응적으로 구성하는 AAH 설계를 제안한다. 코드 구조와 실행 이력의 관계를 활용하는 복구 정책, 관련성·유효성·중복·예산을 고려하는 DCC, 선택적 개입을 위한 피드백 실행 구조 및 독립 평가 설계를 하나의 시스템으로 구성하였다. 현재 확인 가능한 산출물은 연구 및 구현 계획 문서이며, 실제 동작과 성능은 검증 대상이다.
 
-**최종 실증 결론은 보류한다.** 연구 수행 후에는 다음 항목을 G4 승인 결과에 근거하여 작성하고 이 문장을 실제 결론으로 갱신한다.
+**실증 결론 (탐색적).** 아래 결론은 G4 교차 검토 없이 운영자 1인 승인으로 작성했다.
 
 | 최종 결론 항목 | 실제 확인 결과 |
 | --- | --- |
-| 구현 완료 범위 및 실제 사용 가능성 | — |
-| 주 분석 대비 P-R1–P-R3와 불확실성 | — |
-| 지지된 가설 및 결론 불충분 가설 | — |
-| 확인된 비용·성능 trade-off 및 적용 조건 | — |
-| 부정적 결과와 주요 한계 | — |
-| 실증된 연구 기여 및 후속 연구 | — |
+| 구현 완료 범위 및 실제 사용 가능성 | A–E 조건, 그래프 진단, DCC, 복구 루프, 독립 평가, 동결·승인 게이트, 분석 파이프라인을 구현했다. 연구용 실행 경로로 Main 40슬롯을 실행했다. 일반 사용자용 CLI는 검증하지 않았다 |
+| 주 분석 대비 P-R1–P-R3와 불확실성 | P-R1 +5,790토큰 [−6,515, +20,406], P-R2 미평가, P-R3 −12.5%p(구간 없음) |
+| 지지된 가설 및 결론 불충분 가설 | 지지된 가설은 없다. H1·H3·RQ5는 결론 불충분, H2·H4는 미평가다 |
+| 확인된 비용·성능 trade-off 및 적용 조건 | 이번 과제와 모델 조합에서는 기본 Codex(A)가 이미 75%를 풀었다. B–E의 외부 개입이 성공률이나 성공당 토큰을 의미 있게 바꾼다는 근거는 없었다. 개입이 필요한 실패 상태 자체가 드물었다(B 첫 턴 공개 실패 2/8) |
+| 부정적 결과와 주요 한계 | v1의 셸 결함(사전 검사가 실제 에이전트 경로를 검증하지 못함), Pilot 미재실행, AI 리뷰 대체, 소규모·천장 효과, 1인 승인 |
+| 실증된 연구 기여 및 후속 연구 | 연구 기여는 효과 입증이 아니다. 조건 격리·사전 동결·독립 평가를 갖춘 비교 실험 인프라와, 그 인프라로 실행 환경 결함을 검출해 무효 처리한 기록이다. 후속으로는 더 어려운 과제(기본 성공률이 낮은 과제), 반복 수 확대, 체크포인트 프로토콜, 사람 과제 리뷰가 필요하다 |
 
 본 연구의 목표는 엔지니어링 용어를 모두 사용하거나 모델의 성능 향상을 보장하는 것이 아니라, 같은 모델이 어떤 실행 조건에서 더 신뢰성 있고 효율적으로 동작하는지 확인하는 것이다.
 
@@ -663,13 +652,13 @@ P-R3의 C→E, D→E 개별 대비와 성공당 비용의 보조 대비도 함�
 
 | 재현 및 제출 자료 | 실제 위치·버전 |
 | --- | --- |
-| 구현 저장소와 코드 commit / release | — |
-| 의존성 lockfile / runtime capability report | — |
-| 동결 과제·환경·정책·스케줄 manifest | — |
-| 공개 가능한 평가 과제 및 평가 절차 | — |
-| 비식별 실행 로그 및 집계 데이터 | — |
-| 분석 코드 및 FIG01–FIG10 실제 산출물 | — |
-| 라이선스, 공개 범위 및 재현 안내 | — |
+| 구현 저장소와 코드 commit / release | 커밋 `08b1698`(v2 동결 시점 코드). release 없음 |
+| 의존성 lockfile / runtime capability report | `pyproject.toml`(lockfile 없음), Codex CLI 0.166.0 probe 기록([S0](S0_VERIFICATION.md)) |
+| 동결 과제·환경·정책·스케줄 manifest | `configs/main/aah-main-emergency-v2-freeze.json`, 승인·접근 교체 파일 |
+| 공개 가능한 평가 과제 및 평가 절차 | `benchmarks/main_public/AAH-*`(공개 기준본·공개 검사). 비공개 검사는 저장소 밖 큐레이터 키트에 있다 |
+| 비식별 실행 로그 및 집계 데이터 | `results/`(Git 제외, 로컬 보관). 원시 로그에는 로컬 경로가 들어 있어 공개 전 비식별화가 필요 |
+| 분석 코드 및 FIG01–FIG10 실제 산출물 | `analysis/main_analysis.py --amd01 --verify`로 바이트 재현. FIG는 미작성 |
+| 라이선스, 공개 범위 및 재현 안내 | 라이선스 미정. 공개 범위 검토(OD-16) 미완료 |
 
 원시 private tests, 참조 패치, 비밀키, 개인 식별 정보와 민감한 내부 로그는 승인 및 적절한 평가 격리 없이 공개하지 않는다. 공개 데이터의 라이선스에 따라 배포 가능한 자료만 포함하며, 재현이 제한되는 부분은 보고한다.
 
@@ -681,12 +670,12 @@ Main 제한 자료·이전 문서·Git 이력과 배포 파일, 공개 로그·�
 
 | 심사 항목 | 배점 | 계획된 증빙 | 실제 근거 |
 | --- | ---: | --- | --- |
-| 문제정의·필요성 | 15 | 선행연구와 실제 Pilot 실패 사례, 측정 가능한 RQ | — |
-| AI 기술 활용도 | 25 | 실제 Codex 실행, 정책별 개입 및 컨텍스트 선택 로그 | — |
-| 구현 완성도 | 25 | G0/G1 통합 검증, 테스트 및 CLI 실행 증거 | — |
-| 실용성 | 15 | A→E 비교, 사용자 적용 사례 및 비용 | — |
-| 학습과정·협업 | 10 | 역할별 IP 작업·학습 기록, PR 및 리뷰, ADR | — |
-| 차별성·확장성 | 10 | 관련 연구 비교, 실제 ablation 및 적용 한계 | — |
+| 문제정의·필요성 | 15 | 선행연구와 실제 Pilot 실패 사례, 측정 가능한 RQ | RQ·가설·사전 등록 대비, Main 실패 사례 3건 |
+| AI 기술 활용도 | 25 | 실제 Codex 실행, 정책별 개입 및 컨텍스트 선택 로그 | Main 80슬롯(v1·v2) 실제 Codex 실행 기록, 복구 개입·컨텍스트 로그 |
+| 구현 완성도 | 25 | G0/G1 통합 검증, 테스트 및 CLI 실행 증거 | 테스트 263개 통과, S0–S4 검증 문서, 동결·재현 확인 |
+| 실용성 | 15 | A→E 비교, 사용자 적용 사례 및 비용 | A→E 0%p(결론 불충분). 사용자용 CLI는 미검증 |
+| 학습과정·협업 | 10 | 역할별 IP 작업·학습 기록, PR 및 리뷰, ADR | DECISION_LOG(DL-031 등), EXPERIMENT_LOG. 1인 운영이라 교차 리뷰 없음 |
+| 차별성·확장성 | 10 | 관련 연구 비교, 실제 ablation 및 적용 한계 | 문헌 비교만 있음. ablation 미수행 |
 | 합계 | 100 | 실제 심사 점수는 부여하지 않음 | — |
 
 팀원별 수행 범위, 개인별 산출물, 문헌 학습 및 사람의 직접 검증은 `TEAM_ROLES.md`와 실제 기록에서 확인한다. Codex는 프로젝트 개발 보조 도구이면서 별도 실험 대상이므로 두 역할과 권한을 구분한다.
@@ -741,13 +730,13 @@ Main 제한 자료·이전 문서·Git 이력과 배포 파일, 공개 로그·�
 ## 부록 B. 최종본 완성 체크리스트
 
 - [ ] 저자·소속·기여와 실제 팀 승인 확인
-- [ ] RT 기술 검증, 실제 구현 범위, 격리 및 테스트 증거 등록
-- [ ] G2 동결 manifest 및 실제 실험 환경·과제·비용 한도 등록
-- [ ] 모든 계획 슬롯·실제 시도·평가 결과 및 결측 처리 검증
-- [ ] G4 결과 분석 승인 및 주 분석 대비, 분모, 구간 입력
-- [ ] 수행한 ablation과 수행하지 않은 항목 구분
-- [ ] 실제 성공·실패·오개입 사례와 타당성 한계 등록
-- [ ] 초록(국·영문), 기여 및 결론을 실측에 맞춰 갱신
+- [x] RT 기술 검증, 실제 구현 범위, 격리 및 테스트 증거 등록
+- [x] G2 동결 manifest 및 실제 실험 환경·과제·비용 한도 등록
+- [x] 모든 계획 슬롯·실제 시도·평가 결과 및 결측 처리 검증
+- [ ] G4 결과 분석 승인 및 주 분석 대비, 분모, 구간 입력 (수치 입력 완료, 교차 검토 승인 없음)
+- [x] 수행한 ablation과 수행하지 않은 항목 구분
+- [x] 실제 성공·실패·오개입 사례와 타당성 한계 등록
+- [x] 초록(국·영문), 기여 및 결론을 실측에 맞춰 갱신
 - [ ] 참고문헌 원문, 출판 상태, 라이선스 및 공개 범위 확인
 - [ ] README, 시연 및 발표 자료의 수치·주장 일치 확인
 - [ ] G5 최종 제출 승인 및 보고서 버전 갱신
