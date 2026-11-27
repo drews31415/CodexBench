@@ -345,6 +345,14 @@ S는 독립 판정 PASS, F는 FAIL이다. `NSC`는 `NO_SAFE_CONTINUATION` 종료
 4. **규모와 천장 효과:** 8과제 × 1회이고 대부분의 과제가 A로도 풀렸다. 효과를 구분할 검정력이 사실상 없다.
 5. **레지스트리 표기 누락, `analysis_sets.json` 설정 해시 표기 결함:** §2.4 한계 5–6과 같다. v2 `analysis_sets.json`에도 같은 표기 결함이 있다.
 
+**사후 기술 확인 (2026-11-27 제출 정리, 사전 등록 아님, 모델 호출 0)**
+
+원시 기록의 정규화 필드만으로 다시 집계했다. 가설 판단(결론 불충분)은 바꾸지 않는다. 재현 명령은 `python -m analysis.submission_bundle build`/`check`이며, 공개 묶음은 `docs/submission/data/aah-public-bundle.json`이다(EL-20261127-039).
+
+- **그래프 진단 대체 원인.** v2의 그래프 진단 1회(AAH-D04 · E, `6dbae23e…`)는 `INSUFFICIENT_TYPED_EVIDENCE`로 GENERIC_RETRY에 대체됐다. 결합 그래프의 코드↔실행 교차 연결은 0개였다. 미해결 기록은 TESTS_TARGET `unresolved_test_id` 4건, FAILS_AT `unverified_frame_or_version` 2건이다. Main 공개 검사 파서 `main-unittest-counts-v1`이 suite 단위 결과만 남기기 때문이다(테스트 ID = 검사 ID, traceback frame 없음). v1의 8회와 Dev Pilot 5회, S4 라이브 1회도 같은 사유로 대체됐다. 라이브 실행에서 유형별 전략이 선택된 경우는 0회다. 같은 코드는 S3 합성 검증에서 교차 연결을 만들고 RELOCALIZE·REVIEW_REGRESSION을 선택했다(`cd8c853f…`, `975f9c54…`). 따라서 v2의 GRAPH_MAIN 등 그래프 관련 대비는 그래프 유형별 전략의 효과를 측정하지 못했다.
+- **입력이 같은 쌍의 판정 차이.** B/D와 C/E의 최초 메시지는 8/8 과제에서 바이트 동일했다. 16쌍 중 1턴 공개 검사 결과가 갈린 쌍은 3개, 최종 판정이 갈린 쌍은 1개다. 그 1쌍(AAH-D04의 C `2b2066dd…`·E `6dbae23e…`)은 2개 턴 모두 바이트 동일한 메시지(`3a4110d2…`, `828e4915…`)를 받았는데 C는 PASS, E는 FAIL이었다. E − C, E − D, P-R3의 −12.5%p는 모두 이 D04-E 슬롯의 실패에서 나왔다. 정책 차이가 아니라 같은 입력에 대한 모델 비결정성으로 읽어야 한다.
+- **복구 경과.** 1턴 공개 검사에 실패한 B–E 슬롯은 5개(D02-B·C, D04-B·C·E)이고, 모두 복구 1회를 받았다. 그중 4건이 독립 판정 PASS로 끝났다. 공통 실패 체크포인트(P-R2)를 실행하지 않았으므로 인과 효과가 아니다.
+
 ## 3. 데이터 집계 및 분석 전 검증
 
 > §3–§17은 계획 단계의 작성 양식이다. 2026-11-27 Main 실측 결과는 §2.4(v1, 무효)와 §2.5(v2, 주 결과)에 정리했다. 이 양식의 표는 채우지 않았다. 체크포인트(§6)와 ablation(§8)은 `NOT_RUN`이고, §14 실패 사례는 §2.5에 있다.

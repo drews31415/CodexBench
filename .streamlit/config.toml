@@ -1,0 +1,13 @@
+# Repository-root Streamlit configuration (Community Cloud reads it from the root even when the
+# entrypoint is dashboard/streamlit_app.py). The theme follows the viewer's light/dark setting.
+[theme]
+primaryColor = "#257de0"
+
+[client]
+toolbarMode = "viewer"
+
+[server]
+headless = true
+
+[browser]
+gatherUsageStats = false

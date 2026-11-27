@@ -1,0 +1,12 @@
+contrast_id,unit,n_tasks,n_clusters,effect,ci_lower,ci_upper,undefined_replicates,interpretation_status
+P-R1,tokens_per_success,8,8,5789.8571428572,-6514.8333333333,20406.0,0,ESTIMATED
+P-R3,pp,8,8,-0.125,,,,EXPLORATORY_NO_INTERVAL
+E-B,pp,8,8,-0.125,-0.375,0.0,0,ESTIMATED
+C-B,pp,8,8,0.0,0.0,0.0,0,ESTIMATED
+D-B,pp,8,8,0.0,0.0,0.0,0,ESTIMATED
+E-C,pp,8,8,-0.125,-0.375,0.0,0,ESTIMATED
+E-D,pp,8,8,-0.125,-0.375,0.0,0,ESTIMATED
+E-A,pp,8,8,0.0,-0.375,0.375,0,ESTIMATED
+CTX_MAIN,pp,8,8,-0.0625,-0.1875,0.0,0,ESTIMATED
+GRAPH_MAIN,pp,8,8,-0.0625,-0.1875,0.0,0,ESTIMATED
+INTERACTION,pp,8,8,-0.125,-0.375,0.0,0,ESTIMATED

@@ -1,0 +1,4 @@
+# Streamlit Community Cloud reads this file first because it sits next to the entrypoint
+# (dashboard/streamlit_app.py), so the repository's pyproject.toml is not installed for the dashboard.
+# Pinned for reproducible deployments; pandas and altair come with streamlit.
+streamlit==1.67.0

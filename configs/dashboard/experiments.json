@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0",
+  "about": "공개 대시보드 실험 등록부. 실험의 유효성(status)은 사람이 검토해 여기에만 기록한다. 등록되지 않은 새 실험은 자동 발견되지만 유효로 간주하지 않는다(IN_PROGRESS / ANALYSIS_PENDING / UNREVIEWED).",
+  "discovery": {
+    "raw_roots": ["results/main-live/*"],
+    "analysis_roots": ["results/analysis/*"]
+  },
+  "default_release": "submission-2026-11-27",
+  "statuses": {
+    "VALID": "유효",
+    "VALID_EXPLORATORY": "유효 · 탐색적",
+    "INVALID_INFRA_COMPROMISED": "무효 · 인프라 결함",
+    "UNREVIEWED": "완료 · 유효성 미검토",
+    "ANALYSIS_PENDING": "실행 완료 · 분석 전",
+    "IN_PROGRESS": "진행 중"
+  },
+  "experiments": {
+    "aah-main-emergency-v2": {
+      "label": "Main v2",
+      "status": "VALID_EXPLORATORY",
+      "role": "main_result",
+      "status_reason": "v1의 에이전트 셸 결함을 고친 뒤 같은 과제·조건·예산·분석으로 다시 실행한 주 결과. AMD-01 Emergency 규모(8과제 × A–E × 1회)라 모든 해석은 탐색적이다.",
+      "analysis_dir": "results/analysis/aah-main-emergency-v2-amd01",
+      "freeze": "configs/main/aah-main-emergency-v2-freeze.json",
+      "approval": "configs/main/aah-main-emergency-v2-approval.json",
+      "log_ids": ["EL-20261127-035", "EL-20261127-036", "EL-20261127-037", "EL-20261127-038"],
+      "report_ref": "docs/reports/RESULTS_ANALYSIS.md §2.5",
+      "timeline": [
+        {"ref": "EL-20261127-035", "step": "수정·감지 추가", "detail": "모델 호출 없는 sandbox 재현으로 원인 확인. 셸 환경에 SYSTEMROOT·WINDIR·COMSPEC·PATH·PATHEXT만 전달하고 AGENT_SHELL_UNAVAILABLE 자동 감지를 추가. 접근 검사가 에이전트와 같은 셸 환경을 쓰도록 바꿔 8/8 재검사 PASS."},
+        {"ref": "EL-20261127-036", "step": "v2 동결", "detail": "과제·조건·예산·분석은 v1과 동일하게 두고 셸 환경과 접근 기록만 교체한 새 동결."},
+        {"ref": "EL-20261127-037", "step": "v2 실행", "detail": "40/40 실행·독립 판정, 결측 0, 대체 실행 0."},
+        {"ref": "EL-20261127-038", "step": "v2 분석", "detail": "AMD-01 설정으로 분석, --verify 바이트 일치. 가설 판단은 모두 결론 불충분(탐색적 규모)."}
+      ]
+    },
+    "aah-main-emergency-v1": {
+      "label": "Main v1",
+      "status": "INVALID_INFRA_COMPROMISED",
+      "role": "invalidated_history",
+      "status_reason": "에이전트 셸 명령이 MXC launcher의 SYSTEMROOT 누락 오류로 하나도 실행되지 않은 상태에서 실행됐다. 연구 질문의 근거로 쓰지 않으며 결함 발견 이력으로만 보존한다.",
+      "superseded_by": "aah-main-emergency-v2",
+      "analysis_dir": "results/analysis/aah-main-emergency-v1-amd01",
+      "freeze": "configs/main/aah-main-emergency-v1-freeze.json",
+      "approval": "configs/main/aah-main-emergency-v1-approval.json",
+      "log_ids": ["EL-20261127-031", "EL-20261127-032", "EL-20261127-033", "EL-20261127-034"],
+      "report_ref": "docs/reports/RESULTS_ANALYSIS.md §2.4",
+      "timeline": [
+        {"ref": "EL-20261127-031", "step": "v1 동결·승인", "detail": "동결 manifest 재현(MAIN_FREEZE_REPRODUCED) 후 실행 승인. 40슬롯, 최대 104턴."},
+        {"ref": "EL-20261127-032", "step": "v1 실행", "detail": "40/40 실행·판정. 겉보기 결과는 E 87.5% 대 A 0%."},
+        {"ref": "EL-20261127-034", "step": "결함 발견", "detail": "실행 후 원시 로그 검토에서 에이전트 셸 명령 167개가 모두 MXC launcher 오류임을 확인. 원인은 턴 설정 shell_environment_policy.inherit=\"none\". 사전 격리 검사는 codex sandbox 경로라 이 설정을 거치지 않았다."},
+        {"ref": "RESULTS_ANALYSIS §2.4", "step": "무효 판정", "detail": "슬롯을 골라 빼지 않고 실험 전체를 INFRA_COMPROMISED로 표기. 기록은 삭제하지 않고 보존."}
+      ]
+    }
+  },
+  "synthetic": {
+    "s3-verification": {
+      "label": "S3 합성 검증 (스크립트 어댑터, 모델 호출 0건, 라이브 실험 아님)",
+      "root": "results/s3-verification",
+      "report_ref": "docs/reports/S3_VERIFICATION.md",
+      "runs": {
+        "1b382372-a4b8-4697-817a-1f9a631f8ca0": "DEV-01, 첫 턴 완료 선언 후 실패",
+        "cd8c853f-96d0-403a-8cbc-e69444f8f990": "S3-label, 같은 실패 반복",
+        "975f9c54-81b4-444c-bdc5-f21db7b36c3e": "S3-label, 통과하던 검사 회귀"
+      }
+    }
+  },
+  "limitations": [
+    ["P-R2 공통 실패 체크포인트", "NOT_RUN — 측정하지 않음", "AMD-01 §7.2 조건 1·2 미충족 (RESULTS_ANALYSIS §2.5)"],
+    ["Ablation AB1–AB4", "NOT_RUN — 구성 요소별 효과 주장 없음", "Emergency 범위에서 생략 (AMD-01 §7.3)"],
+    ["leave-one-repository-out 민감도", "미구현 — 미수행", "분석 코드에 없음 (AMD-01 §8)"],
+    ["과금액", "미관측 (cost_kind=UNKNOWN)", "기존 구독 사용, 추가 결제 0원"],
+    ["토큰 예산", "observe_only — 관측만, 강제 상한 아님", "엄격한 동일 토큰 예산이라고 주장하지 않음"],
+    ["과제 검토 독립성", "사람 동료 리뷰(BQ14) 없음 — AI 리뷰로 대체 (AMD-01)", "검사 수정·리뷰 모두 claude-opus-5-5, 변형본 작성 개발 세션과 같은 모델"],
+    ["승인 구조", "1인이 RH·GR·CE 승인 겸임", "교차 검토자 없음 (G4)"],
+    ["비공개 검사 수정", "8과제 중 5과제(C03·D02·D04·R04·S02) 1회 수정 후 편입", "수정은 Main 실행 전, 해시 스냅샷·재리뷰로 고정"],
+    ["Pilot 재실행", "셸 결함 수정 후 Pilot 재실행 없음", "정책 시작값은 셸이 막힌 Pilot 근거"],
+    ["v1 열람", "v2 실행 전 v1 결과 열람", "과제·조건·예산·분석은 v1 동결 그대로 유지"],
+    ["규모", "8과제 × 1회 · 저장소 3개 · 군집 8개", "검정력 사실상 없음, 천장 효과 (A가 6/8 해결)"],
+    ["표기 결함", "analysis_sets.json의 config_sha256 표기가 기본 설정 해시", "수치 영향 없음, 동결 코드 보존을 위해 미수정"]
+  ]
+}

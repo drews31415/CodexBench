@@ -10,3 +10,13 @@ tests/fixtures/evaluation/**/*.json text eol=lf
 configs/** -text
 docs/project/AMENDMENT_01_AI_REVIEW_EMERGENCY_MAIN.md -text
 docs/project/AMD01_*.md -text
+# Public submission bundle: hash-verified bytes (verify-public compares SHA-256), keep exactly as built.
+docs/submission/data/** -text
+docs/submission/figures/** -text
+docs/submission/dashboard.html -text
+# Versioned public store for the web dashboard: MANIFEST hashes cover exact bytes.
+public_data/** -text
+# Static GitHub Pages dashboard: generated, byte-compared with a fresh build.
+docs/dashboard/** -text
+docs/index.html -text
+docs/.nojekyll -text

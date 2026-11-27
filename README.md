@@ -26,6 +26,8 @@
 >
 > Main 평가 과제는 사람 동료 리뷰(BQ14)를 받지 않았다. 사전 등록한 수정 프로토콜 AMD-01(DL-031)에 따라 독립 AI 리뷰와 객관적 검사(대안 구현·불완전 수정 검출·반복·격리)를 통과한 과제만 편입했다. 승인은 1인이 RH·GR·CE를 겸임해 수행했다. 규모는 Emergency(최대 8과제 × A–E × 1회)이며 모든 결과는 탐색적이다.
 
+> **제출 자료 (심사용):** [제출서](submission.md) · 웹 대시보드 [GitHub Pages 배포 후 URL 입력] (정적, 24시간 · [배포](DASHBOARD_DEPLOYMENT.md) · [데이터 갱신](DASHBOARD_UPDATE_GUIDE.md)) · [오프라인 대시보드](docs/submission/dashboard.html)(브라우저로 열기, 설치·네트워크 불필요) · [증빙 자료](docs/submission/EVIDENCE_PACK.md) · [실행·확인 가이드](docs/submission/JUDGE_GUIDE.md) · [제출 점검표](SUBMISSION_CHECKLIST.md). 공개 자료만으로 분석을 다시 계산하려면 `python -m analysis.submission_bundle verify-public`을 실행한다(`PYTHONPATH=src;.`).
+
 [프로젝트 소개](#프로젝트-소개) · [아키텍처](#아키텍처) · [사용-계획](#사용-계획) · [실험-설계](#실험-설계) · [개발-및-기여](#개발-및-기여) · [문서-인덱스](#문서-인덱스)
 
 ## 프로젝트 소개
@@ -444,12 +446,19 @@ README는 소개와 탐색의 출발점입니다. 세부 요구사항은 아래 
 | 문서 | 상태와 역할 |
 | --- | --- |
 | [DECISION_LOG.md](docs/project/DECISION_LOG.md) | 결정·미결 사항과 실제 승인 기록 |
-| [EXPERIMENT_LOG.md](docs/reports/EXPERIMENT_LOG.md) | 운영·실험 기록 양식, 미실측 |
-| [RESULTS_ANALYSIS.md](docs/reports/RESULTS_ANALYSIS.md) | 집계·해석 양식, 미실측 |
-| [FINAL_REPORT.md](docs/reports/FINAL_REPORT.md) | 보고서 초안, 미실측 |
+| [EXPERIMENT_LOG.md](docs/reports/EXPERIMENT_LOG.md) | 운영·실험 기록 (Main v1 무효·v2 실행 포함, append-only) |
+| [RESULTS_ANALYSIS.md](docs/reports/RESULTS_ANALYSIS.md) | 집계·해석. Main v2 결과 §2.5, v1 무효 기록 §2.4 |
+| [FINAL_REPORT.md](docs/reports/FINAL_REPORT.md) | 연구 보고서 (Main v2 결과 반영) |
 | [DEMO_SCENARIO.md](docs/reports/DEMO_SCENARIO.md) | 시연 계획, 실제 실행 증거 필요 |
 | [DOCUMENTATION_CHANGELOG.md](DOCUMENTATION_CHANGELOG.md) | 문서 정합화 내용, 수정 전 감사 요약, 검증 및 후속 결정 |
 | [DOCUMENTATION_AUDIT.md](DOCUMENTATION_AUDIT.md) | 정합화 이전 상태를 기록한 설계 감사 |
+| [submission.md](submission.md) | 공식 제출서 |
+| [EVIDENCE_PACK.md](docs/submission/EVIDENCE_PACK.md) | 심사 증빙 E01–E15 (출처·실험 ID·run_id 포함) |
+| [JUDGE_GUIDE.md](docs/submission/JUDGE_GUIDE.md) | 대시보드 실행과 공개 자료 검증 방법 |
+| [dashboard.html](docs/submission/dashboard.html) | 실제 실행 기록 기반 결과 대시보드 (오프라인 단일 파일) |
+| [SUBMISSION_CHECKLIST.md](SUBMISSION_CHECKLIST.md) · [SUBMISSION_CHANGELOG.md](SUBMISSION_CHANGELOG.md) | 제출 전 점검 SUB01–SUB15와 제출 정리 변경 이력 |
+| [DASHBOARD_DEPLOYMENT.md](DASHBOARD_DEPLOYMENT.md) · [DASHBOARD_UPDATE_GUIDE.md](DASHBOARD_UPDATE_GUIDE.md) | 웹 대시보드 배포 절차(GitHub Pages 정적 페이지, Streamlit Community Cloud)와 버전별 공개 데이터 갱신 절차 |
+| [docs/dashboard/index.html](docs/dashboard/index.html) | GitHub Pages용 정적 대시보드 (`public_data/`에서 생성, 직접 고치지 않음) |
 
 ## 로드맵 및 확장 범위
 

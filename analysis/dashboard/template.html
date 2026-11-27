@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<meta name="aah-bundle-sha256" content="{{BUNDLE_SHA256}}">
+<title>AAH {{TITLE}} — 저장된 실험 기록 기반</title>
+<style>
+{{STYLE}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <h1>Adaptive Agent Harness <span class="sub">{{TITLE}}</span></h1>
+    <p class="source">{{SUBTITLE}} · 모델·Codex 호출 없음 · 데이터 SHA-256 <code>{{BUNDLE_SHA256}}</code></p>
+  </div>
+  <nav class="tabs" role="tablist" aria-label="대시보드 화면">
+    <button role="tab" data-tab="overview">개요</button>
+    <button role="tab" data-tab="benchmark">조건 비교</button>
+    <button role="tab" data-tab="trace">실행 추적</button>
+    <button role="tab" data-tab="graph">그래프 탐색</button>
+    <button role="tab" data-tab="context">컨텍스트</button>
+    <button role="tab" data-tab="replay">복구 Replay</button>
+    <button role="tab" data-tab="audit">실험 감사</button>
+  </nav>
+</header>
+<main id="view" tabindex="-1"><noscript><p class="panel">이 대시보드는 JavaScript가 필요하다. 같은 수치는 docs/submission/EVIDENCE_PACK.md와 data/ 폴더의 CSV에서 확인할 수 있다.</p></noscript></main>
+<div id="tip" role="tooltip" hidden></div>
+<script id="aah-data" type="application/json">{{DATA}}</script>
+<script id="aah-figures" type="application/json">{{FIGURES}}</script>
+<script>
+{{APP}}
+</script>
+</body>
+</html>

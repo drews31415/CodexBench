@@ -319,9 +319,9 @@ return the final patch and report
 | Context Compiler | DEFAULT와 DCC 패키징 정책 | `src/aah/context`, [S2](S2_VERIFICATION.md) |
 | Experiment Runner | 비교군, 실행 스케줄, 체크포인트 분기 | `src/aah/experiments`, `benchmarks/main_public`, [S4](S4_VERIFICATION.md). 라이브 체크포인트 분기는 Main에서 미사용 |
 | Independent Evaluator | 최종 기능·회귀·제약 판정 | `evaluation/`, 고정 Docker worker, 큐레이터 키트 프로세스 분리 |
-| Reporting / Analysis | 실행 보고, 비용·성공률 분석 및 시각화 | `analysis/main_analysis.py`, EP30 바이트 재현. 시각화(FIG) 미작성 |
+| Reporting / Analysis | 실행 보고, 비용·성공률 분석 및 시각화 | `analysis/main_analysis.py`, EP30 바이트 재현. 시각화·대시보드: `analysis/submission_figures.py`, [`docs/submission/dashboard.html`](../submission/dashboard.html) (2026-11-27 제출 정리) |
 
-자동 테스트는 263개가 모두 통과한다(`pytest tests`). 실제 모델 호출 테스트는 일반 CI에 넣지 않았다.
+자동 테스트는 303개가 모두 통과한다(`pytest tests`, 2026-11-27 제출 정리 시점, `docs/submission/data/verification-record.json`). Main 실행 당시에는 263개였고, 제출 정리에서 공개 묶음·대시보드·문서 정합성·공개 데이터 내보내기·웹 대시보드·정적 페이지 테스트 40개를 추가했다. 실제 모델 호출 테스트는 일반 CI에 넣지 않았다.
 
 설계 기술은 Python 3.11+, Codex CLI 우선 검증(SDK 대안), Python 상태 머신, AST와 NetworkX MultiDiGraph, BM25, JSON/JSONL/CSV, Git, 검증된 격리 환경 및 pytest이다. 구체 버전과 라이선스는 동결 전 확정한다. 단일 프로세스와 로컬 저장을 우선하고 필요 없는 그래프 DB 또는 워크플로 프레임워크 도입을 지양한다.
 
@@ -672,7 +672,7 @@ Main 제한 자료·이전 문서·Git 이력과 배포 파일, 공개 로그·�
 | --- | ---: | --- | --- |
 | 문제정의·필요성 | 15 | 선행연구와 실제 Pilot 실패 사례, 측정 가능한 RQ | RQ·가설·사전 등록 대비, Main 실패 사례 3건 |
 | AI 기술 활용도 | 25 | 실제 Codex 실행, 정책별 개입 및 컨텍스트 선택 로그 | Main 80슬롯(v1·v2) 실제 Codex 실행 기록, 복구 개입·컨텍스트 로그 |
-| 구현 완성도 | 25 | G0/G1 통합 검증, 테스트 및 CLI 실행 증거 | 테스트 263개 통과, S0–S4 검증 문서, 동결·재현 확인 |
+| 구현 완성도 | 25 | G0/G1 통합 검증, 테스트 및 CLI 실행 증거 | 테스트 303개 통과, S0–S4 검증 문서, 동결·재현 확인, 실제 기록 기반 대시보드·공개 재계산 ([EVIDENCE_PACK](../submission/EVIDENCE_PACK.md)) |
 | 실용성 | 15 | A→E 비교, 사용자 적용 사례 및 비용 | A→E 0%p(결론 불충분). 사용자용 CLI는 미검증 |
 | 학습과정·협업 | 10 | 역할별 IP 작업·학습 기록, PR 및 리뷰, ADR | DECISION_LOG(DL-031 등), EXPERIMENT_LOG. 1인 운영이라 교차 리뷰 없음 |
 | 차별성·확장성 | 10 | 관련 연구 비교, 실제 ablation 및 적용 한계 | 문헌 비교만 있음. ablation 미수행 |
