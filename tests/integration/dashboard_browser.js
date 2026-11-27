@@ -95,13 +95,13 @@ const ok = (cond, label) => { checks += 1; if (!cond) fails.push(label); return 
     }
     const visible = (el) => { const cs = getComputedStyle(el); if (cs.display === 'none' || cs.visibility === 'hidden') return false; const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
     const inter = (a, b, pad) => a.left < b.right - pad && b.left < a.right - pad && a.top < b.bottom - pad && b.top < a.bottom - pad;
-    document.querySelectorAll('svg.arch').forEach((svg) => {
+    document.querySelectorAll('svg.arch, svg.flow').forEach((svg) => {
       if (!visible(svg)) return;
-      const texts = [...svg.querySelectorAll('text')].filter(visible).map((t) => ({ t: t.textContent, r: t.getBoundingClientRect(), node: t.closest('a.anode') }));
+      const texts = [...svg.querySelectorAll('text')].filter(visible).map((t) => ({ t: t.textContent, r: t.getBoundingClientRect(), node: t.closest('.anode') }));
       for (let i = 0; i < texts.length; i++) for (let j = i + 1; j < texts.length; j++) if (inter(texts[i].r, texts[j].r, 1)) out.textOverlap.push('arch: ' + texts[i].t + ' / ' + texts[j].t);
       texts.forEach((x) => { if (!x.node) return; const b = x.node.querySelector('rect.nb').getBoundingClientRect(); if (x.r.left < b.left - 0.5 || x.r.right > b.right + 0.5) out.textOutside.push('arch: ' + x.t); });
       const boxes = [...svg.querySelectorAll('rect.nb')].map((r) => r.getBoundingClientRect());
-      const lines = [...svg.querySelectorAll('text')].filter(visible).filter((t) => !t.closest('a.anode'));
+      const lines = [...svg.querySelectorAll('text')].filter(visible).filter((t) => !t.closest('.anode'));
       lines.forEach((t) => { const r = t.getBoundingClientRect(); boxes.forEach((b) => { if (inter(r, b, 1)) out.textOverlap.push('arch label over node: ' + t.textContent); }); });
     });
     document.querySelectorAll('svg.gsvg').forEach((svg) => {
@@ -155,6 +155,7 @@ const ok = (cond, label) => { checks += 1; if (!cond) fails.push(label); return 
   for (const [mname, w, h, mobile] of modes) {
     await setView(w, h, mobile, "light");
     await load("#overview");
+    await evalJs("document.querySelector('details.archfold').open = true;0");
     for (const c of ["A", "B", "C", "D", "E", "all"]) {
       await evalJs("document.querySelector('[data-arch=\"" + c + "\"]').click();0");
       await sleep(60);
@@ -182,8 +183,8 @@ const ok = (cond, label) => { checks += 1; if (!cond) fails.push(label); return 
   ok((await evalJs("location.hash")).startsWith("#replay") && await evalJs("document.activeElement.dataset.tab") === "replay", "arrow key moves between tabs");
   // quick-tour links resolve to representative cases
   await load("#overview");
-  const quick = await evalJs("[...document.querySelectorAll('.qlink')].map(a => a.getAttribute('href'))");
-  ok(quick.length === 6 && quick.every(Boolean), "six quick-tour links with targets");
+  const quick = await evalJs("[...document.querySelectorAll('a.qlink, a.audit-link')].map(a => a.getAttribute('href'))");
+  ok(quick.length === 5 && quick.every(Boolean), "four feature links and the audit link have targets");
   for (const href of quick) {
     await go(href);
     const r = await evalJs("({ notice: !!document.querySelector('.callout.warn[role=status]'), err: !!document.querySelector('#view .err'), hash: location.hash })");
@@ -240,7 +241,7 @@ const ok = (cond, label) => { checks += 1; if (!cond) fails.push(label); return 
   await evalJs("document.querySelector('[data-act=theme]').click();0");
   ok(await evalJs("document.documentElement.dataset.theme") === "light", "theme toggle: light");
   await evalJs("document.querySelector('[data-act=theme]').click();0");
-  ok(await evalJs("document.documentElement.dataset.theme") === "dark" && await evalJs("getComputedStyle(document.body).backgroundColor") === "rgb(13, 14, 17)", "theme toggle: dark colors");
+  ok(await evalJs("document.documentElement.dataset.theme") === "dark" && await evalJs("getComputedStyle(document.body).backgroundColor") === "rgb(33, 33, 33)", "theme toggle: dark colors");
   await evalJs("document.querySelector('[data-act=theme]').click();0");
 
   // nothing left the file: no network requests other than the page itself and data: URLs; no console errors

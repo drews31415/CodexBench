@@ -72,8 +72,9 @@ def test_site_renders_every_release_experiment_and_selection():
     for value in ("[−6,515, +20,406]", "+5,790 토큰", "−12.5%p", "[−18.8%p, 0.0%p]"):
         assert value in bench, value
     assert "[−6,515, +20,406]" in docs and "+5,790 토큰" in docs
-    assert "33 / 7" in result["probes"]["overview"]
-    assert "무효 실험" in result["probes"]["overview:submission-2026-11-27:aah-main-emergency-v1"]
+    # The run summary and the invalid-experiment banner live on the audit screen since the 2026-11-28 simplification.
+    assert "33 / 7" in result["probes"]["audit:submission-2026-11-27:aah-main-emergency-v2"]
+    assert "무효 실험" in result["probes"]["audit:submission-2026-11-27:aah-main-emergency-v1"]
 
 
 # ---------------------------------------------------------------- dashboard rework (repository graphs, browser check)
@@ -133,8 +134,9 @@ def test_site_renders_repository_graphs_replay_steps_and_notices():
     passed = next(s for s in record["steps"] if s["id"] == "tests")["counts"]["passed"]
     data, _ = static_site.site_payload(ROOT)
     runs = sum(len(e["runs"]) for e in data["experiments"].values()) + sum(len(s["runs"]) for s in data["synthetic"])
-    for value in (f"{passed:,}", f">{runs}<", "심사위원 빠른 탐색", "시스템 아키텍처", "Harness Engineering", "Loop Engineering"):
+    for value in (f">{passed:,}<", "시스템 동작 방식", "핵심 기능 탐색", "연구 결과", "Harness Engineering", "Loop Engineering"):
         assert value in overview, value
+    assert f">{runs}<" in result["probes"]["audit:submission-2026-11-27:aah-main-emergency-v2"]
 
 
 def _chrome() -> str | None:

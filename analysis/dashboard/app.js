@@ -146,7 +146,7 @@
       "</tbody></table></div>";
   };
   const kv = (pairs) => '<dl class="kv">' + pairs.map(([k, v]) => "<dt>" + esc(k) + "</dt><dd>" + v + "</dd>").join("") + "</dl>";
-  const select = (key, value, options, label) => '<label>' + esc(label) + '<select data-key="' + esc(key) + '">' +
+  const select = (key, value, options, label, title) => '<label>' + esc(label) + '<select data-key="' + esc(key) + '"' + (title ? ' title="' + esc(title) + '"' : "") + ">" +
     options.map(([v, t]) => '<option value="' + esc(v) + '"' + (v === value ? " selected" : "") + ">" + esc(t) + "</option>").join("") +
     "</select></label>";
   const panel = (title, body, opts) => {
@@ -154,6 +154,8 @@
     return '<section class="panel ' + (o.cls || "") + '"' + (o.id ? ' id="' + esc(o.id) + '"' : "") + ">" +
       (title ? '<div class="phead"><h2>' + esc(title) + "</h2>" + (o.sub ? '<p class="psub">' + o.sub + "</p>" : "") + "</div>" : "") + body + "</section>";
   };
+  const fold = (summary, body, opts) => '<details class="fold' + (opts && opts.cls ? " " + opts.cls : "") + '"' + (opts && opts.open ? " open" : "") +
+    "><summary>" + summary + '</summary><div class="fold-body">' + body + "</div></details>";
   const sourceNote = (text) => '<p class="small muted src-note">출처: ' + esc(text) + "</p>";
   const tile = (label, value, note, cls) => '<div class="tile ' + (cls || "") + '"><div class="label">' + esc(label) + '</div><div class="value">' + esc(value) +
     '</div><div class="note">' + esc(note || "") + "</div></div>";
@@ -175,6 +177,7 @@
     gauge: '<path d="M4 18a8 8 0 1 1 16 0"/><path d="m12 18 4-6"/>',
     cpu: '<rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>',
     arrow: '<path d="m9 18 6-6-6-6"/>',
+    out: '<path d="M6 18 18 6M8 6h10v10"/>',
     check: '<path d="m5 12 5 5 9-10"/>',
     minus: '<path d="M6 12h12"/>',
     alert: '<path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17v.5"/>',
@@ -422,21 +425,14 @@
 
   function filters(state, extra) {
     const exps = experimentsIn(state.release);
+    const e = exp(state.exp);
     return '<div class="filters" role="group" aria-label="데이터 기준 선택">' + select("release", state.release, releaseOptions(), "데이터 기준") +
-      (exps.length ? select("exp", state.exp, exps.map((id) => [id, label(id) + " · " + ((exp(id) || {}).status_label || "")]), "실험") : "") +
-      (extra || "") + '<span class="basis">' + basisChip(state) + expChip(state) + '<span class="small muted updated">' +
-      (C().data_updated_at ? "마지막 데이터 갱신 " + esc(stamp(C().data_updated_at)) : "제출 시점 고정본") + "</span></span></div>";
+      (exps.length ? select("exp", state.exp, exps.map((id) => [id, label(id) + " · " + ((exp(id) || {}).status_label || "")]), "실험", e ? e.status_reason : "") : "") +
+      (extra || "") + "</div>";
   }
 
   // Experiment status next to the data basis; the explanation is in the tooltip. Invalid and unfinished
   // experiments still get a full-width banner (statusBanner), valid ones do not.
-  function expChip(state) {
-    const e = exp(state.exp);
-    if (!e || !e.status) return "";
-    const cls = isValid(e.status) ? "good" : isInvalid(e.status) ? "crit" : "warn";
-    return '<span class="chip ' + cls + '" tabindex="0" data-tip="' + esc(e.status_reason || "") + '" title="' + esc(e.status_reason || "") + '">' +
-      esc(label(state.exp) + " · " + (STATUS_LABEL[e.status] || e.status)) + "</span>";
-  }
 
   function notices(state) {
     const q = state._req || {};
@@ -540,229 +536,180 @@
     return svg + "</svg>";
   }
 
-  function archPanel(state) {
+  function archBox(state) {
     const caps = {
-      all: "조건을 고르면 그 조건에서 실제로 켜지는 단계만 강조된다. 각 상자를 누르면 관련 화면으로 이동한다.",
-      A: "A Vanilla — 외부 개입과 보조 정보가 없다. 하네스는 실행을 관측하고 공개 검사만 기록하며, 실패해도 복구 루프를 돌리지 않는다.",
-      B: "B Flat Retry — 실패가 감지되면 일반 진단(FLAT) → 일반 재시도 → DEFAULT 컨텍스트로 후속 턴을 보낸다. 그래프·DCC 호출 0.",
-      C: "C Context-only — B와 같은 일반 재시도에, 보조 정보만 DCC가 점수·중복 제거·예산 기준으로 고른다. 그래프 호출 0.",
-      D: "D Graph-only — 그래프 진단으로 유형별 전략을 고르고, 보조 정보는 DEFAULT를 쓴다. DCC 호출 0. 근거가 부족하면 일반 재시도로 대체한다.",
+      all: "조건을 고르면 그 조건에서 실제로 켜지는 단계만 강조된다. 상자를 누르면 관련 화면으로 이동한다.",
+      A: "A Vanilla — 외부 개입과 보조 정보가 없다. 하네스는 실행을 관측하고 공개 검사만 기록한다.",
+      B: "B Flat Retry — 실패가 감지되면 일반 진단(FLAT) → 일반 재시도 → DEFAULT 컨텍스트로 후속 턴을 보낸다.",
+      C: "C Context-only — B와 같은 일반 재시도에, 보조 정보만 DCC가 점수·중복 제거·예산 기준으로 고른다.",
+      D: "D Graph-only — 그래프 진단으로 유형별 전략을 고르고, 보조 정보는 DEFAULT를 쓴다. 근거가 부족하면 일반 재시도로 대체한다.",
       E: "E Adaptive Harness — 그래프 진단·유형별 전략과 DCC를 함께 쓴다. 최초 메시지는 C와 바이트 단위로 같다 (CT03).",
     };
     const btns = ["all"].concat(COND).map((c) => '<button type="button" class="seg' + (c === "all" ? " on" : "") + '" data-arch="' + c + '" aria-pressed="' + (c === "all") + '">' +
       (c === "all" ? "전체 흐름" : condChip(c) + " " + esc(COND_NAME[c])) + "</button>").join("");
-    return panel("시스템 아키텍처 — 실행 한 번이 지나가는 길",
-      '<div class="archbox" data-cond="all"><div class="segs" role="group" aria-label="조건별 활성 단계 보기">' + btns + "</div>" +
+    return '<div class="archbox" data-cond="all"><div class="segs" role="group" aria-label="조건별 활성 단계 보기">' + btns + "</div>" +
       '<div class="archfig">' + archSvg(state, "wide") + archSvg(state, "compact") + "</div>" +
-      '<div class="legend arch-legend"><span><span class="sw o-codex"></span>Codex — 자율 문제 해결</span><span><span class="sw o-aah"></span>AAH — 실행 관측·제어 (외부 하네스)</span>' +
-      '<span><span class="sw o-eval"></span>독립 평가 — 에이전트 비공개</span><span><span class="sw line loop"></span>복구 피드백 루프</span><span><span class="sw line bound"></span>평가 경계</span></div>' +
-      '<div class="archcap" aria-live="polite">' + Object.entries(caps).map(([c, t]) => '<p class="cap cap-' + c + '">' + esc(t) + "</p>").join("") + "</div></div>",
-      { sub: "Codex는 문제를 풀고, AAH는 그 바깥에서 관측·통제하며, 독립 평가는 별도 환경에서 판정한다. 그림은 구현된 상태 전이를 단순화한 것이다." });
+      '<div class="legend arch-legend"><span><span class="sw o-codex"></span>Codex — 자율 문제 해결</span><span><span class="sw o-aah"></span>AAH — 실행 관측·제어</span>' +
+      '<span><span class="sw o-eval"></span>독립 평가 — 에이전트 비공개</span><span><span class="sw line loop"></span>복구 루프</span><span><span class="sw line bound"></span>평가 경계</span></div>' +
+      '<div class="archcap" aria-live="polite">' + Object.entries(caps).map(([c, t]) => '<p class="cap cap-' + c + '">' + esc(t) + "</p>").join("") + "</div></div>";
   }
 
-  function hero(state, st) {
+  // Simple flow of the minimal overview (geometry from the approved overview mockup).
+  const FLOW = {
+    nodes: [["codex", "Codex 실행", 103, 5, 134, 32], ["obs", "실행 관측 및 실패 감지", 103, 63, 134, 34], ["graph", "그래프 기반 진단", 5, 135, 151, 34],
+      ["ctx", "동적 컨텍스트 구성", 185, 135, 150, 34], ["eval", "독립 평가", 103, 212, 134, 34]],
+    wires: ["M170 37 V61", "M103 97 H81 V133", "M156 152 H184", "M260 135 V21 H238", "M170 97 V210"],
+    labels: [["실패", 56, 119], ["종료", 179, 198], ["복구", 271, 81]],
+  };
+  function flowSvg() {
+    return '<svg class="flow" viewBox="0 0 340 255" role="img" aria-label="Codex 실행 후 실행 관측 및 실패 감지. 실패하면 그래프 기반 진단과 동적 컨텍스트 구성을 거쳐 Codex로 복구 실행, 종료되면 독립 평가.">' +
+      '<defs><marker id="flow-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6" class="mk"/></marker></defs>' +
+      '<g class="fw">' + FLOW.wires.map((d) => '<path d="' + d + '"/>').join("") + "</g>" +
+      FLOW.nodes.map(([k, t, x, y, w, h]) => '<g class="anode f-' + k + '"><rect class="nb" x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="6"/><text x="' + (x + w / 2) + '" y="' + (y + h / 2 + 4) + '" text-anchor="middle">' + esc(t) + "</text></g>").join("") +
+      FLOW.labels.map(([t, x, y]) => '<text class="fl" x="' + x + '" y="' + y + '">' + esc(t) + "</text>").join("") + "</svg>";
+  }
+
+  function aboutBody(state) {
     const e = exp(primaryExp(state));
     const m = e && e.meta && e.meta.model ? e.meta.model : null;
-    const model = m ? m.model_id + " · " + m.adapter + " " + m.runtime_version : "Codex CLI";
-    return '<section class="hero" aria-labelledby="hero-title"><div class="hero-main">' +
-      '<p class="eyebrow">Codex를 위한 검증 가능한 적응형 실행 환경</p>' +
-      '<h1 id="hero-title">Adaptive Agent Harness <span class="abbr">(AAH)</span></h1>' +
-      '<p class="lead">AI 코딩 에이전트의 생산성을 활용하면서도 실행 과정과 결과를 추적하고 검증할 수 있도록, <strong>실행 관측 · 그래프 기반 실패 진단 · 동적 컨텍스트 최적화 · 적응형 복구 · 독립 평가</strong>를 통합한 시스템.</p>' +
-      '<div class="hero-actions"><button type="button" class="btn primary" data-act="jump" data-target="quick">' + icon("play", "sm") + "3–5분 심사 경로</button>" +
-      linkTo(state, { tab: "benchmark", exp: primaryExp(state) }, icon("chart", "sm") + "실험 결과 바로 보기", "btn") + "</div></div>" +
-      '<div class="roles" role="list" aria-label="Codex, AAH, 독립 평가의 역할">' +
-      '<div class="role o-codex" role="listitem"><span class="rtag">Codex</span><strong>문제를 푼다</strong><p>어떤 파일을 읽고 고칠지, 어떤 테스트를 돌릴지 스스로 정한다. <span class="muted">(' + esc(model) + ")</span></p></div>" +
-      '<div class="role o-aah" role="listitem"><span class="rtag">AAH</span><strong>관측하고 통제한다</strong><p>이벤트를 증거로 기록하고, 실패하면 <em>입력(복구 지시·보조 정보)과 개입 시점</em>만 바꾼다. 모델 가중치·내부 추론은 건드리지 않는다.</p></div>' +
-      '<div class="role o-eval" role="listitem"><span class="rtag">독립 평가</span><strong>판정한다</strong><p>고정된 최종 패치를 에이전트가 볼 수 없는 비공개 검사로 판정한다. 판정은 에이전트에 돌아가지 않는다.</p></div></div></section>';
+    const why = [["빠른 생성, 느린 이해", "AI는 결과물을 빠르게 만들지만, 그 결과와 의사결정 근거를 이해하기는 어렵다."],
+      ["위임이 늘수록 통제가 필요", "맡기는 업무와 결정이 넓어질수록 실행을 통제하고 검증할 수 있어야 한다."],
+      ["검증도 효율화해야 한다", "코드 생산성뿐 아니라 실패를 감지하고 확인하는 비용도 줄여야 한다."],
+      ["자율성은 두고, 바깥에서 관측", "Codex의 자율적 문제 해결은 그대로 두고 외부 실행 환경에서 관측·검증한다."]];
+    return '<dl class="roles"><dt><span class="rdot o-codex"></span>Codex — 문제를 푼다</dt><dd>어떤 파일을 읽고 고칠지, 어떤 테스트를 돌릴지 스스로 정한다' +
+      (m ? " (" + esc(m.model_id + " · " + m.adapter + " " + m.runtime_version) + ")" : "") + ".</dd>" +
+      '<dt><span class="rdot o-aah"></span>AAH — 관측하고 통제한다</dt><dd>이벤트를 증거로 기록하고, 실패하면 입력(복구 지시·보조 정보)과 개입 시점만 바꾼다. 모델 가중치·내부 추론은 건드리지 않는다.</dd>' +
+      '<dt><span class="rdot o-eval"></span>독립 평가 — 판정한다</dt><dd>고정된 최종 패치를 에이전트가 볼 수 없는 비공개 검사로 판정한다. 판정은 에이전트에 돌아가지 않는다.</dd></dl>' +
+      '<h3 class="sub">왜 필요한가</h3><ul class="plain">' + why.map(([t, d]) => "<li><strong>" + esc(t) + "</strong> — " + esc(d) + "</li>").join("") + "</ul>" +
+      '<h3 class="sub">왜 Codex인가</h3><p>Codex CLI는 비대화식 실행(<code>codex exec --json</code>)에서 명령·파일 변경·사용량을 구조화된 이벤트로 내보내고, 같은 세션에 후속 턴을 보낼 수 있다(<code>exec resume</code>). 그래서 모델 내부를 건드리지 않고 실행을 관측하고 복구 지시를 전달할 수 있다. 이 프로젝트에서 Codex는 실제 실행 엔진이자 실험 대상이다.</p>';
   }
 
-  function problemSection() {
-    const cards = [
-      ["doc", "빠른 생성, 느린 이해", "AI는 코드와 결과물을 빠르게 만들지만, 개발자가 그 결과와 의사결정 근거를 충분히 이해하기는 어렵다."],
-      ["shield", "위임이 늘수록 통제가 필요", "AI에 맡기는 업무와 기술적 결정이 넓어질수록, 실행을 통제하고 검증할 수 있어야 한다."],
-      ["gauge", "검증도 효율화해야 한다", "코드 생산성만이 아니라 실패를 감지하고 확인하는 검증 과정의 비용도 줄여야 한다."],
-      ["eye", "자율성은 두고, 바깥에서 관측", "Codex의 자율적 문제 해결은 그대로 두고, 외부 실행 환경에서 체계적으로 관측·검증한다."],
-    ];
-    return '<section class="band" aria-labelledby="why-title"><h2 id="why-title" class="bandh">왜 필요한가</h2><div class="cards4">' +
-      cards.map(([i, t, d], k) => '<div class="pcard"><div class="pnum">' + icon(i) + '<span>' + (k + 1) + "</span></div><strong>" + esc(t) + "</strong><p>" + esc(d) + "</p></div>").join("") +
-      '</div><div class="whycodex">' + icon("cpu") + '<div><strong>왜 Codex인가</strong><p>Codex CLI는 비대화식 실행(<code>codex exec --json</code>)에서 명령·파일 변경·사용량을 구조화된 이벤트로 내보내고, 같은 세션에 후속 턴을 보낼 수 있다(<code>exec resume</code>). 그래서 모델 내부를 건드리지 않고도 실행을 관측하고 복구 지시를 전달할 수 있다. 이 프로젝트에서 Codex는 보조 도구가 아니라 <strong>실제 실행 엔진이자 실험 대상</strong>이다.</p></div></div></section>';
-  }
-
-  function kpis(state, st) {
-    const v = st.valid.map(label).join(", ") || "없음";
-    const ve = exp(st.valid[0]);
-    const meta = ve && ve.meta ? ve.meta : {};
-    const design = ve ? Object.keys(ve.tasks || {}).length + "과제 × " + (st.conds.size || 0) + "조건 × " + (meta.repetitions || "N/A") + "회" : "유효 실험 없음";
-    const t = st.tests;
-    const tiles = [
-      tile("유효 본실험 실행", fmt(st.ran), v + " · " + design, "kpi"),
-      tile("비교 실험 조건", fmt(st.conds.size), "A Vanilla + B–E 2×2 요인설계", "kpi"),
-      tile("자동 테스트 통과", t ? fmt(t.passed) : "기록 없음", t ? "실패 " + fmt(t.failed) + " · " + (st.testsOn || "") + " release 검증 기록" : "이 데이터 기준에 검증 기록 없음", "kpi"),
-      tile("탐색 가능한 실행 기록", fmt(st.total), "유효 " + fmt(st.runs.valid) + " · 무효 " + fmt(st.runs.invalid) + (st.runs.open ? " · 미확정 " + fmt(st.runs.open) : "") + " · 합성 " + fmt(st.runs.synthetic), "kpi"),
-      tile("복구 개입 전달", fmt(st.recov), "유효 실험 · 그중 독립 PASS " + fmt(st.recovPass) + "건", "kpi"),
-      tile("독립 평가 완료", fmt(st.judged) + " / " + fmt(st.planned), "유효 실험 슬롯 · 결측 " + fmt(st.planned - st.judged), "kpi"),
-    ];
-    const why = "실행 기록 " + fmt(st.total) + "개 = 유효 실험 " + fmt(st.runs.valid) + "개" + (st.runs.invalid ? " + 무효 실험 " + fmt(st.runs.invalid) + "개(" + st.invalid.map(label).join(", ") + " · 결함 이력으로 보존)" : "") +
-      (st.runs.open ? " + 결과 미확정 " + fmt(st.runs.open) + "개" : "") + (st.runs.synthetic ? " + 합성 검증 " + fmt(st.runs.synthetic) + "개(모델 호출 0, 라이브 아님)" : "") +
-      ". 연구 결론에는 유효 실험만 쓰고, 무효·합성 기록은 합산하지 않는다.";
-    return '<section class="band" aria-labelledby="kpi-title"><h2 id="kpi-title" class="bandh">핵심 지표 <span class="muted small">— 선택한 데이터 기준에서 계산</span></h2><div class="tiles kpis">' + tiles.join("") +
-      '</div><p class="explain">' + esc(why) + "</p></section>";
-  }
-
-  function techSection(state, st) {
+  function techTable(state, st) {
     const e = exp(primaryExp(state));
     const dccList = e ? Object.values(e.runs || {}).flatMap((r) => (r.context || []).filter((p) => p.policy === "DCC")) : [];
-    const dccPk = dccList.length;
     const dccDecisions = dccList.reduce((a, p) => a + (p.decisions || []).length, 0);
-    const syn = st.synth.reduce((a, s) => a + Object.values(s.runs || {}).filter((r) => (r.interventions || []).some((iv) => iv.strategy && iv.strategy !== "GENERIC_RETRY")).length, 0);
-    const cards = [
-      { k: "harness", i: "cpu", t: "Harness Engineering", s: "Codex 실행 환경과 외부 제어",
-        d: "격리된 작업 사본·샌드박스 권한에서 Codex 턴을 실행하고, JSON 이벤트를 정규화한 증거 원장과 상태 머신으로 실행을 통제한다. 조건은 resolver 하나로만 구성한다.",
-        m: ["runtime/", "workspace/", "workflow/", "evidence/", "domain/ (resolver)"], go: { tab: "trace" }, where: "실행 추적",
-        st: [["good", "구현 · 라이브 " + fmt(st.ran) + "회 실행"]] },
-      { k: "context", i: "layers", t: "Context Engineering", s: "관련 정보의 동적 선별과 최적화",
-        d: "후보마다 관련성(BM25)·유효성·범위·실패 연관성 점수를 매기고, 중복을 병합한 뒤 2,048 추정 토큰 예산 안에서 한계 효용이 높은 것만 담는다. 선택·제외 근거를 모두 기록한다.",
-        m: ["context/dcc.py", "context/default.py", "context/relevance.py", "context/candidates.py"], go: { tab: "context" }, where: "컨텍스트",
-        st: [["good", "구현 · 라이브 DCC 패키지 " + fmt(dccPk) + "개"], ["", "선택·제외 근거 " + fmt(dccDecisions) + "건 기록"]] },
-      { k: "graph", i: "graph", t: "Graph Engineering", s: "코드 구조와 실행 증거의 연결",
-        d: "AST로 만든 Repository Graph와 관측으로 만든 Execution Graph를, 테스트 ID·traceback frame·diff 범위가 검증될 때만 연결한다. 제한된 탐색으로 원인 후보(가설)를 좁힌다.",
-        m: ["graphs/repository.py", "graphs/execution.py", "graphs/mapping.py", "diagnosis/graph.py"], go: { tab: "graph", gmode: "repo" }, where: "그래프 탐색",
-        st: [["good", "구현 · 합성 검증에서 유형별 전략 " + fmt(syn) + "건"], ["", repoTasks().length + "개 과제 코드 구조 탐색"]] },
-      { k: "loop", i: "loop", t: "Loop Engineering", s: "실패 감지 이후 선택적 복구",
-        d: "공통 규칙(T1–T5)으로 개입 시점을 정하고 전략을 골라 같은 세션의 후속 턴에 전달한다. 최대 2회, 새 관측이 없으면 같은 체크포인트에 다시 개입하지 않고 안전 종료한다.",
-        m: ["diagnosis/detector.py", "diagnosis/flat.py", "recovery/controller.py", "workflow/state_machine.py"], go: { tab: "replay" }, where: "복구 Replay",
-        st: [["good", "구현 · 라이브 개입 " + fmt(st.recov) + "회 전달"], [st.recovPass ? "good" : "", "그중 독립 PASS " + fmt(st.recovPass) + "건"]] },
+    const syn = st.synth.reduce((a, x) => a + Object.values(x.runs || {}).filter((r) => (r.interventions || []).some((iv) => iv.strategy && iv.strategy !== "GENERIC_RETRY")).length, 0);
+    const rows = [
+      ["Harness Engineering", "Codex 실행 환경과 외부 제어 — 격리 작업 사본, 이벤트 증거 원장, 상태 머신, 조건 resolver", "runtime/ · workspace/ · workflow/ · evidence/", "라이브 " + fmt(st.ran) + "회 실행", { tab: "trace" }],
+      ["Context Engineering", "관련 정보의 동적 선별 — 관련성·유효성·범위·실패 점수, 중복 병합, 예산 안 선택", "context/", "DCC 패키지 " + fmt(dccList.length) + "개 · 근거 " + fmt(dccDecisions) + "건", { tab: "context" }],
+      ["Graph Engineering", "코드 구조와 실행 증거의 연결 — 검증된 근거로만 연결, 제한 탐색으로 원인 후보(가설)", "graphs/ · diagnosis/graph.py", "과제 그래프 " + repoTasks().length + "개 · 합성 유형별 전략 " + syn + "건", { tab: "graph", gmode: "repo" }],
+      ["Loop Engineering", "실패 감지 후 선택적 복구 — T1–T5 감지, 전략 선택, 최대 2회, 새 관측 필수", "diagnosis/detector.py · recovery/ · workflow/", "개입 " + fmt(st.recov) + "회 · 독립 PASS " + fmt(st.recovPass) + "건", { tab: "replay" }],
     ];
-    return '<section class="band" aria-labelledby="tech-title"><h2 id="tech-title" class="bandh">핵심 기술 네 가지</h2><div class="cards4 tech">' +
-      cards.map((c) => '<article class="tcard t-' + c.k + '"><div class="thead">' + icon(c.i) + "<div><strong>" + esc(c.t) + "</strong><span>" + esc(c.s) + "</span></div></div><p>" + esc(c.d) + "</p>" +
-        '<div class="mods" aria-label="구현 모듈">' + c.m.map((x) => "<code>src/aah/" + esc(x) + "</code>").join("") + "</div>" +
-        '<div class="tstat">' + c.st.map(([k, t]) => '<span class="badge ' + k + '">' + esc(t) + "</span>").join("") + "</div>" +
-        linkTo(state, c.go, esc(c.where) + "에서 확인 " + icon("arrow", "sm"), "more") + "</article>").join("") + "</div></section>";
+    return '<h3 class="sub">핵심 기술과 구현 모듈</h3>' + table(["기술", "역할", "모듈 (src/aah/)", "기록", ""], rows.map(([t, d, m, v, g]) =>
+      ["<strong>" + esc(t) + "</strong>", esc(d), "<code>" + esc(m) + "</code>", esc(v), linkTo(state, g, "보기", "nowrap")]));
   }
 
-  function resultsSection(state, st) {
+  function resultDetail(state, st) {
     const pid = primaryExp(state);
     const e = exp(pid);
-    if (!e || !e.conditions) {
-      return panel("핵심 연구 결과와 한계", '<p class="muted">이 데이터 기준의 주 실험은 결과가 확정되지 않아 요약을 표시하지 않는다.</p>');
-    }
+    if (!e || !e.conditions) return '<p class="muted">이 데이터 기준의 주 실험은 결과가 확정되지 않았다.</p>';
     const cm = e.conditions;
     const d = e.derived || {};
     const cps = COND.filter((c) => cm[c] && isNum(cm[c].cps_tokens));
     const lo = cps.slice().sort((a, b) => cm[a].cps_tokens - cm[b].cps_tokens)[0], hi = cps.slice().sort((a, b) => cm[b].cps_tokens - cm[a].cps_tokens)[0];
     const cts = e.contrasts || [];
-    const gu = d.graph_use || {};
-    const graphCalls = Object.values(gu).reduce((a, b) => a + b, 0);
+    const graphCalls = Object.values(d.graph_use || {}).reduce((a, b) => a + b, 0);
     const v1 = st.invalid.map(exp).find((x) => x && x.derived && x.derived.commands);
     const par = d.parity || {};
     const meta = e.meta || {};
     const done = [
       ["실제 Codex 기반 통제 비교 실험", label(pid) + " " + fmt(st.ran) + "회 실행·독립 판정 " + fmt(st.judged) + "건, 결측 " + fmt(st.planned - st.judged), { tab: "benchmark" }],
       ["A–E 성공률·실행 효율 측정", COND.filter((c) => cm[c]).map((c) => c + " " + cm[c].successes + "/" + cm[c].valid).join(" · ") +
-        (lo ? " — 성공당 토큰 " + lo + " " + fmt(cm[lo].cps_tokens) + " ~ " + hi + " " + fmt(cm[hi].cps_tokens) : ""), { tab: "benchmark" }],
-      ["적응형 복구 루프 구현·동작", "라이브 개입 " + fmt(st.recov) + "회 전달, 그중 " + fmt(st.recovPass) + "건 독립 PASS. 합성 검증에서 RELOCALIZE·REVIEW_REGRESSION 동작 확인", { tab: "replay" }],
+        (lo ? ", 성공당 토큰 " + lo + " " + fmt(cm[lo].cps_tokens) + " ~ " + hi + " " + fmt(cm[hi].cps_tokens) : ""), { tab: "benchmark" }],
+      ["적응형 복구 루프 동작", "라이브 개입 " + fmt(st.recov) + "회 전달, 그중 " + fmt(st.recovPass) + "건 독립 PASS. 합성 검증에서 RELOCALIZE·REVIEW_REGRESSION 동작", { tab: "replay" }],
       ["정책 격리 재확인", "B/D·C/E 최초 메시지 바이트 동일 " + fmt(par.B_equals_D) + "/" + fmt(par.tasks) + " · " + fmt(par.C_equals_E) + "/" + fmt(par.tasks) + " 과제", { tab: "audit" }],
-      ["실행 환경 결함 발견·수정", v1 ? label(v1.experiment_id) + " 셸 명령 " + fmt(v1.derived.commands.exit_nonzero) + "/" + fmt(v1.derived.commands.total) + " 실패 → 실험 전체 무효 판정·보존 → 수정 후 " + label(pid) + " 재실행" : "기록 없음", { tab: "audit" }],
+      ["실행 환경 결함 발견·수정", v1 ? label(v1.experiment_id) + " 셸 명령 " + fmt(v1.derived.commands.exit_nonzero) + "/" + fmt(v1.derived.commands.total) + " 실패 → 무효 판정·보존 → " + label(pid) + " 재실행" : "기록 없음", { tab: "audit" }],
     ];
     const open = [
       ["정책별 효과 크기는 결론 전", "대비 " + cts.length + "개 모두 95% 구간이 0을 포함하거나 구간이 없다 (" + Object.keys(e.tasks || {}).length + "과제 × " + (meta.repetitions || "N/A") + "회, A도 " + (cm.A ? cm.A.successes + "/" + cm.A.valid : "N/A") + " 해결)",
-        "반복 수·과제 수를 늘려 사전 등록한 대비를 다시 측정", "결론 전", { tab: "benchmark" }],
+        "반복 수·과제 수를 늘려 사전 등록한 대비를 다시 측정", { tab: "benchmark" }],
       ["라이브 실행에서 그래프 근거 연결 미발생", "라이브 그래프 진단 " + fmt(graphCalls) + "회는 공개 검사가 suite 단위라 테스트 ID·frame 연결이 없어 일반 재시도로 처리됐다",
-        "공개 검사 결과를 테스트 함수·frame 단위로 기록", "관측 정보 부족", { tab: "graph", gmode: "diag" }],
-      ["공통 실패 체크포인트(P-R2)·ablation", "이번 실험 범위에서는 실행하지 않았다", "체크포인트 복구율과 AB1–AB4 측정", "미측정", { tab: "audit" }],
+        "공개 검사 결과를 테스트 함수·frame 단위로 기록", { tab: "graph", gmode: "diag" }],
+      ["공통 실패 체크포인트(P-R2)·ablation", "이번 실험 범위에서는 실행하지 않았다 (미측정)", "체크포인트 복구율과 AB1–AB4 측정", { tab: "audit" }],
     ];
-    const bars = '<div class="mini"><p class="small muted">조건별 성공 (독립 판정, ' + esc(label(pid)) + ")</p>" + COND.filter((c) => cm[c]).map((c) =>
-      '<div class="mrow"><span>' + condChip(c) + '</span><span class="mtrack"><span class="mfill c-' + c + '" style="width:' + (cm[c].valid ? (cm[c].successes / cm[c].valid * 100).toFixed(1) : 0) + '%"></span></span><span class="mval">' +
-      esc(cm[c].successes + "/" + cm[c].valid) + "</span></div>").join("") + "</div>";
-    return '<section class="band" aria-labelledby="res-title"><h2 id="res-title" class="bandh">핵심 연구 결과와 한계</h2><div class="results">' +
-      '<div class="rcol ok"><h3>' + icon("check", "sm") + "구현·측정된 것</h3><ul>" + done.map(([t, x, g]) => "<li><strong>" + esc(t) + "</strong><span>" + esc(x) + "</span>" + linkTo(state, g, "근거 보기 " + icon("arrow", "sm"), "more") + "</li>").join("") + "</ul></div>" +
-      '<div class="rcol gap"><h3>' + icon("arrow", "sm") + "현재 한계와 다음 단계</h3><ul>" + open.map(([t, x, n, b, g]) => "<li><strong>" + esc(t) + ' <span class="badge">' + esc(b) + "</span></strong><span>" + esc(x) + '</span><span class="nextstep">다음 단계: ' + esc(n) + "</span>" + linkTo(state, g, "근거 보기 " + icon("arrow", "sm"), "more") + "</li>").join("") +
-      "</ul></div>" + bars + "</div>" +
-      '<p class="small muted">상세 근거: 조건 비교·실험 감사 화면, ' + esc(e.report_ref || "docs/reports/RESULTS_ANALYSIS.md") + "</p></section>";
+    const bars = COND.filter((c) => cm[c]).map((c) => '<div class="mrow"><span>' + condChip(c) + '</span><span class="mtrack"><span class="mfill c-' + c + '" style="width:' +
+      (cm[c].valid ? (cm[c].successes / cm[c].valid * 100).toFixed(1) : 0) + '%"></span></span><span class="mval">' + esc(cm[c].successes + "/" + cm[c].valid) + "</span></div>").join("");
+    return '<div class="rd"><div><h3 class="sub">조건별 성공 (독립 판정)</h3>' + bars + "</div>" +
+      '<div><h3 class="sub">구현·측정된 것</h3><ul class="plain">' + done.map(([t, x, g]) => "<li><strong>" + esc(t) + "</strong> — " + esc(x) + " " + linkTo(state, g, "근거", "more") + "</li>").join("") + "</ul></div>" +
+      '<div><h3 class="sub">현재 한계와 다음 단계</h3><ul class="plain">' + open.map(([t, x, n, g]) => "<li><strong>" + esc(t) + "</strong> — " + esc(x) + '. <span class="muted">다음 단계: ' + esc(n) + "</span> " + linkTo(state, g, "근거", "more") + "</li>").join("") + "</ul></div></div>";
   }
 
-  function quickNav(state) {
-    const pk = picks(state);
-    const pid = pk.exp;
-    const run = (r) => (r ? r.task_id + " · " + COND_LABEL[r.condition] : null);
-    const cards = [
-      { n: 1, i: "chart", t: "실험 결과 확인", q: "어떤 정책이 어떤 결과를 냈는가?", what: "A–E 성공률·토큰·성공당 토큰·효과 크기와 95% 구간", min: "1분",
-        href: nav(state, { tab: "benchmark", exp: pid }), pick: label(pid) + " (주 실험)", why: "데이터 기준이 고정한 주 실험" },
-      { n: 2, i: "code", t: "실제 코드 구조 탐색", q: "벤치마크 저장소는 어떻게 생겼는가?", what: "AST로 추출한 Repository Graph · 파일·클래스·함수·호출·import", min: "40초",
-        href: pk.repo ? nav(state, { tab: "graph", gmode: "repo", rtask: pk.repo.task_id }) : null, pick: pk.repo ? pk.repo.task_id + " (" + pk.repo.task_family_id + ")" : null,
-        why: "관계 수가 가장 많은 과제 (동률이면 과제 ID 순)" },
-      { n: 3, i: "graph", t: "그래프 기반 실패 진단", q: "실패에서 코드 후보까지 어떻게 가는가?", what: "실행 증거 ↔ 코드 연결, 앵커·탐색 경로·원인 후보(가설)", min: "1분",
-        href: pk.graphSyn ? nav(state, { tab: "graph", gmode: "diag", graph: pk.graphSyn.key }) : pk.graphLive ? nav(state, { tab: "graph", gmode: "diag", graph: pk.graphLive.key }) : null,
-        pick: pk.graphSyn ? "합성 " + pk.graphSyn.iv.strategy + " (라이브 아님)" : pk.graphLive ? run(pk.graphLive.run) : null,
-        why: "후보가 도출된 합성 사례 중 라이브 사례와 같은 트리거를 가진 것", alt: pk.graphLive ? [nav(state, { tab: "graph", gmode: "diag", graph: pk.graphLive.key }), "라이브 사례 " + run(pk.graphLive.run) + " — 교차 연결 0"] : null },
-      { n: 4, i: "layers", t: "동적 컨텍스트 최적화", q: "Codex에 무엇을 보내고 무엇을 뺐는가?", what: "DCC 후보·점수 구성·선택/제외 이유·토큰 예산 사용량", min: "40초",
-        href: pk.dcc ? nav(state, { tab: "context", exp: pid, task: pk.dcc.task_id, cond: pk.dcc.condition }) : null, pick: run(pk.dcc),
-        why: "선택·제외가 모두 있는 복구 DCC 패키지 (Replay 성공 사례와 같은 실행 우선)" },
-      { n: 5, i: "play", t: "실패 복구 Replay", q: "실패하면 시스템은 어떻게 대응하는가?", what: "실패 감지 → 진단 → 전략 → 컨텍스트 → 후속 실행 → 독립 평가", min: "1분",
-        href: pk.ok ? nav(state, { tab: "replay", exp: pid, case: pid + "|" + pk.ok.run_id, step: "0" }) : null, pick: pk.ok ? run(pk.ok) + " → PASS" : null,
-        why: "개입 후 독립 PASS 중, 같은 과제에 개입 후 실패 사례가 있는 DCC 실행", alt: pk.fail ? [nav(state, { tab: "replay", exp: pid, case: pid + "|" + pk.fail.run_id, step: "0" }), "실패 사례 " + run(pk.fail) + " → FAIL"] : null },
-      { n: 6, i: "shield", t: "실험 신뢰성 확인", q: "결과를 믿을 수 있는가?", what: "무효 실험과 결함 수정, 정책 격리, 사전 동결 해시, 재현 검증, 한계", min: "1분",
-        href: nav(state, { tab: "audit", exp: pid }), pick: "데이터 기준·동결·격리·한계", why: "실험 감사 화면 전체" },
-    ];
-    return '<section class="band" id="quick" tabindex="-1" aria-labelledby="quick-title"><h2 id="quick-title" class="bandh">심사위원 빠른 탐색 <span class="muted small">— 순서대로 약 5분, 대표 사례가 자동으로 선택된다</span></h2><ol class="quick">' +
-      cards.map((c) => '<li class="qcard">' + (c.href ? '<a class="qlink" href="' + esc(c.href) + '">' : '<div class="qlink off">') +
-        '<span class="qn">' + c.n + "</span>" + icon(c.i, "qi") + '<span class="qbody"><strong>' + esc(c.t) + '</strong><span class="qq">' + esc(c.q) + '</span><span class="qw">' + esc(c.what) + "</span>" +
-        '<span class="qp">' + (c.pick ? "선정 사례: " + esc(c.pick) : "이 데이터 기준에 사례 없음") + " · 약 " + esc(c.min) + "</span></span>" + icon("arrow", "qa") + (c.href ? "</a>" : "</div>") +
-        '<p class="qwhy">선정 기준: ' + esc(c.why) + (c.alt ? ' · <a href="' + esc(c.alt[0]) + '">' + esc(c.alt[1]) + "</a>" : "") + "</p></li>").join("") + "</ol></section>";
-  }
 
-  function dataSection(state) {
-    const parts = [];
+
+
+
+
+  function runSummary(state) {
     const e = exp(state.exp);
-    if (e) {
-      const s = e.slots || [];
-      const ran = s.filter((x) => x.selected_run_id).length;
-      const judged = s.filter((x) => x.evaluation_status).length;
-      const ok = s.filter((x) => x.y === 1).length;
-      const tiles = [tile("계획 슬롯", fmt(s.length), "과제 × 조건 × 반복"), tile("실제 실행", fmt(ran), "실제 Codex 실행"),
-        tile("독립 판정", fmt(judged), "결측·미판정 " + fmt(s.length - judged) + "건")];
-      if (e.conditions) {
-        const rec = s.reduce((a, x) => a + (x.recoveries_delivered || 0), 0);
-        const tok = s.reduce((a, x) => a + (x.model_tokens || 0), 0);
-        const rt = s.reduce((a, x) => a + (x.runtime_ms || 0), 0);
-        tiles.push(tile("성공 / 실패", fmt(ok) + " / " + fmt(judged - ok), "독립 판정 기준"), tile("복구 전달", fmt(rec), "B–E 개입 후 후속 턴"),
-          tile("모델 토큰", fmt(tok), "관측값 (observe_only)"), tile("실행 시간 합계", (rt / 60000).toFixed(1) + "분", "슬롯 실행 시간 합"));
-      } else {
-        tiles.push(tile("결과", "미확정", e.status_label || ""));
-      }
-      parts.push(panel(label(state.exp) + " 실행 요약", '<div class="tiles">' + tiles.join("") + "</div>" + sourceNote((e.public_dir || "") + "/run_status.csv")));
+    if (!e) return "";
+    const s = e.slots || [];
+    const ran = s.filter((x) => x.selected_run_id).length;
+    const judged = s.filter((x) => x.evaluation_status).length;
+    const ok = s.filter((x) => x.y === 1).length;
+    const tiles = [tile("계획 슬롯", fmt(s.length), "과제 × 조건 × 반복"), tile("실제 실행", fmt(ran), "실제 Codex 실행"), tile("독립 판정", fmt(judged), "결측·미판정 " + fmt(s.length - judged) + "건")];
+    if (e.conditions) {
+      const rec = s.reduce((a, x) => a + (x.recoveries_delivered || 0), 0);
+      const tok = s.reduce((a, x) => a + (x.model_tokens || 0), 0);
+      const rt = s.reduce((a, x) => a + (x.runtime_ms || 0), 0);
+      tiles.push(tile("성공 / 실패", fmt(ok) + " / " + fmt(judged - ok), "독립 판정 기준"), tile("복구 전달", fmt(rec), "B–E 개입 후 후속 턴"),
+        tile("모델 토큰", fmt(tok), "관측값 (observe_only)"), tile("실행 시간 합계", (rt / 60000).toFixed(1) + "분", "슬롯 실행 시간 합"));
+    } else {
+      tiles.push(tile("결과", "미확정", e.status_label || ""));
     }
-    const rows = (C().experiments || []).map((x) => {
-      const p = x.progress || {};
-      const ee = exp(x.key) || {};
-      const sl = ee.slots || [];
-      return [esc(x.key), esc(x.label || ee.label || ""), statusBadge(x.status),
-        p.planned ? esc(p.evaluated + "/" + p.planned) : esc(sl.filter((r) => r.evaluation_status).length + "/" + sl.length),
-        esc(stamp(x.exported_at)), hashShort(x.data_sha256, 12)];
-    });
-    parts.push(panel("실험 버전과 상태", table(["실험 ID", "이름", "상태", "판정 슬롯", "데이터 내보낸 시각", "데이터 해시"], rows) +
-      '<p class="small muted">유효 · 탐색적 = 주 결과 / 무효 = 결함 이력으로 보존 / 진행 중·분석 전·미검토 = 결과 미확정. 상태는 사람이 검토한 등록부에서만 정한다. 실험 버전끼리 결과를 합산하지 않는다.</p>'));
-    parts.push(panel("release (결과 고정본)", table(["release", "이름", "종류", "생성 시각", "주 실험", "포함 실험"], releaseList().map((r) =>
-      [esc(r.release_id), esc(r.label), esc(r.kind), esc(stamp(r.created_at)), esc(r.primary), esc(Object.keys(r.experiments || {}).join(", "))]))));
-    if (e && e.meta && e.meta.model) {
-      const m = e.meta, b = m.budget || {};
-      parts.push(panel("실행 설정 (동결 기준)", kv([
-        ["모델 / runtime", esc([m.model.model_id, "추론 " + m.model.reasoning_effort, m.model.adapter + " " + m.model.runtime_version, m.model.session_mode].join(" · "))],
-        ["프로토콜 / 반복", esc((m.protocol || "N/A") + " / " + (m.repetitions || "N/A") + "회")],
-        ["턴 상한", esc("총 " + fmt(b.max_total_turns) + " (최초 " + fmt(b.max_initial_turns) + " + 복구 " + fmt(b.max_recovery_turns) + "), 슬롯당 복구 " + fmt(b.recovery_turns_per_eligible_slot) + "회")],
-        ["실행 한도", esc("실행당 " + secs(b.wall_ms_per_run) + " · 턴당 " + secs(b.native_turn_ms) + " · 정리 예비 " + secs(b.cleanup_reserve_ms))],
-        ["보조 정보 상한", esc(fmt(b.supplement_cap) + " 추정 토큰 (B–E 공통)")],
-        ["토큰 한도 방식", esc(b.token_limit_mode || "N/A") + ' <span class="muted">(관측만, 강제 아님)</span>'],
-        ["코드 버전", "<code>" + esc(m.code_version || "N/A") + "</code>"],
-      ])));
-    }
-    return '<section class="band" aria-labelledby="data-title"><h2 id="data-title" class="bandh">데이터 버전과 실행 설정</h2>' + parts.join("") + "</section>";
+    return panel(label(state.exp) + " 실행 요약", '<div class="tiles">' + tiles.join("") + "</div>" + sourceNote((e.public_dir || "") + "/run_status.csv"));
+  }
+
+  function runSettings(state) {
+    const e = exp(state.exp);
+    if (!e || !e.meta || !e.meta.model) return "";
+    const m = e.meta, b = m.budget || {};
+    return kv([
+      ["모델 / runtime", esc([m.model.model_id, "추론 " + m.model.reasoning_effort, m.model.adapter + " " + m.model.runtime_version, m.model.session_mode].join(" · "))],
+      ["프로토콜 / 반복", esc((m.protocol || "N/A") + " / " + (m.repetitions || "N/A") + "회")],
+      ["턴 상한", esc("총 " + fmt(b.max_total_turns) + " (최초 " + fmt(b.max_initial_turns) + " + 복구 " + fmt(b.max_recovery_turns) + "), 슬롯당 복구 " + fmt(b.recovery_turns_per_eligible_slot) + "회")],
+      ["실행 한도", esc("실행당 " + secs(b.wall_ms_per_run) + " · 턴당 " + secs(b.native_turn_ms) + " · 정리 예비 " + secs(b.cleanup_reserve_ms))],
+      ["보조 정보 상한", esc(fmt(b.supplement_cap) + " 추정 토큰 (B–E 공통)")],
+      ["토큰 한도 방식", esc(b.token_limit_mode || "N/A") + ' <span class="muted">(관측만, 강제 아님)</span>'],
+      ["코드 버전", hashFull(m.code_version)],
+    ]);
   }
 
   function overview(state) {
     const st = releaseStats(state);
-    return [header(state), hero(state, st), kpis(state, st), problemSection(), archPanel(state), techSection(state, st),
-      resultsSection(state, st), quickNav(state), dataSection(state)].join("");
+    const pk = picks(state);
+    const pid = pk.exp;
+    const ve = exp(st.valid[0]);
+    const design = ve ? Object.keys(ve.tasks || {}).length + "과제 × " + st.conds.size + "조건 × " + ((ve.meta || {}).repetitions || "N/A") + "회" : "";
+    const t = st.tests;
+    const stat = (v, l, tip) => '<div class="stat" title="' + esc(tip) + '"><div class="value">' + esc(v) + '</div><div class="label">' + esc(l) + "</div></div>";
+    const run = (r) => (r ? r.task_id + " · " + COND_LABEL[r.condition] : "");
+    const links = [
+      [nav(state, { tab: "benchmark", exp: pid }), "chart", "조건 비교", "A–E 정책별 성능 및 실행 효율", label(pid) + " 조건 비교"],
+      [pk.repo ? nav(state, { tab: "graph", gmode: "repo", rtask: pk.repo.task_id }) : null, "graph", "그래프 탐색", "실제 코드 구조 및 실패 진단",
+        pk.repo ? "열리는 사례: " + pk.repo.task_id + " Repository Graph (관계 수가 가장 많은 과제)" : ""],
+      [pk.ok ? nav(state, { tab: "replay", exp: pid, case: pid + "|" + pk.ok.run_id, step: "0" }) : null, "play", "복구 Replay", "에이전트 실패부터 후속 실행까지",
+        pk.ok ? "열리는 사례: " + run(pk.ok) + " → PASS (개입 후 성공, 같은 과제에 실패 사례가 있는 DCC 실행)" : ""],
+      [pk.dcc ? nav(state, { tab: "context", exp: pid, task: pk.dcc.task_id, cond: pk.dcc.condition }) : null, "layers", "컨텍스트 최적화", "정보 선별 및 토큰 예산 관리",
+        pk.dcc ? "열리는 사례: " + run(pk.dcc) + " (선택·제외가 모두 있는 복구 DCC 패키지)" : ""],
+    ];
+    const e = exp(pid);
+    const r = release(state.release);
+    const basis = state.release === LATEST ? "최신 데이터 (고정본 아님)" : r ? (r.label || r.release_id) + " · 고정본" : "";
+    return notices(state) + '<article class="ov" aria-label="AAH 개요">' +
+      '<section class="ov-intro"><h1>Adaptive Agent Harness</h1><strong>Codex를 위한 검증 가능한 적응형 실행 환경</strong>' +
+      '<p class="desc">AI 에이전트의 자율성을 활용하면서 실행 과정과 결과의 검증 가능성을 확보합니다.</p>' + fold("프로젝트 소개", aboutBody(state), { cls: "ovfold" }) + "</section>" +
+      '<section class="stats" aria-label="핵심 성과 지표">' +
+      stat(fmt(st.judged), "유효 비교 실험", (st.valid.map(label).join(", ") || "유효 실험 없음") + (design ? " · " + design : "") + " · 독립 판정 " + st.judged + "/" + st.planned) +
+      stat(t ? fmt(t.passed) : "—", "자동 테스트 통과", t ? "release 검증 기록 " + (st.testsOn || "") + " · 실패 " + t.failed : "이 데이터 기준에 검증 기록 없음") +
+      stat(fmt(st.conds.size), "비교 정책", COND.filter((c) => st.conds.has(c)).map((c) => COND_LABEL[c]).join(" · ")) +
+      stat(fmt(repoTasks().length), "코드 그래프 탐색", "Main 과제 Repository Graph (공개 과제 원본에서 재추출)") + "</section>" +
+      '<section class="sec"><h2>시스템 동작 방식</h2>' + flowSvg() + fold("상세 구조 · 조건별 단계 · 구현 모듈", archBox(state) + techTable(state, st), { cls: "ovfold archfold" }) + "</section>" +
+      '<section class="sec"><h2>핵심 기능 탐색</h2><div class="links">' + links.map(([href, ic, title, desc, tip]) => (href ? '<a class="qlink" href="' + esc(href) + '" title="' + esc(tip) + '">' : '<div class="qlink off">') +
+        icon(ic, "li") + "<span><strong>" + esc(title) + "</strong><small>" + esc(desc) + "</small></span>" + icon("arrow", "la") + (href ? "</a>" : "</div>")).join("") + "</div></section>" +
+      '<section class="sec result"><h2>연구 결과</h2><p>' + (e && e.conditions ? "실제 Codex 비교 실험을 완료하고 적응형 복구 시스템의 동작을 검증했습니다. 탐색적 실험에서 정책의 성능 개선 효과는 입증되지 않았으며, 후속 개선에 필요한 기술적 원인을 확인했습니다."
+        : "이 데이터 기준의 주 실험은 결과가 아직 확정되지 않았습니다.") + "</p>" +
+      '<a class="audit-link" href="' + esc(nav(state, { tab: "audit", exp: pid })) + '">상세 실험 기록 및 검증 결과' + icon("out", "lo") + "</a>" + fold("결과 요약 자세히", resultDetail(state, st), { cls: "ovfold" }) + "</section>" +
+      '</article><p class="ov-foot">데이터: ' + esc(basis) + (C().data_updated_at ? " · 마지막 갱신 " + esc(stamp(C().data_updated_at)) : "") + "</p>";
   }
 
   // ------------------------------------------------------------------ condition comparison
@@ -801,7 +748,7 @@
     const meta = e.meta || {};
     const nTasks = Object.keys(e.tasks || {}).length;
     parts.push('<p class="scope">' + esc(label(state.exp) + " · " + nTasks + "과제 × " + conds.length + "조건 × " + (meta.repetitions || "N/A") + "회 반복 (저장소 " +
-      new Set(Object.values(e.tasks || {}).map((t) => t.repo_id)).size + "개) — 탐색적 규모. 조건 간 차이는 아래 효과 크기와 95% 구간으로 판단한다.") + "</p>");
+      new Set(Object.values(e.tasks || {}).map((t) => t.repo_id)).size + "개) · 탐색적 규모 — 차이는 효과 크기와 95% 구간으로 판단") + "</p>");
 
     // condition design
     const yes = (t) => '<span class="yes">' + icon("check", "sm") + esc(t) + "</span>";
@@ -816,14 +763,14 @@
     const cell = (c) => '<div class="ff-cell c-' + c + '"><span class="ff-name">' + condName(c) + '</span><span class="ff-val">' + esc(cm[c] ? cm[c].successes + "/" + cm[c].valid + " 성공" : "N/A") +
       '</span><span class="ff-sub">' + esc(cm[c] && isNum(cm[c].cps_tokens) ? "성공당 " + fmt(cm[c].cps_tokens) + " 토큰" : "") + "</span></div>";
     const ctr = Object.fromEntries((e.contrasts || []).map((x) => [x.contrast_id, x]));
-    parts.push(panel("조건 설계", '<div class="grid2 design"><div>' + table(["조건", "설명", "외부 복구", "보조 정보", "그래프 기반 진단"], design) +
+    const designHtml = '<div class="grid2 design"><div>' + table(["조건", "설명", "외부 복구", "보조 정보", "그래프 기반 진단"], design) +
       '<details><summary>정책 필드 원본 (' + (recorded ? "각 실행 manifest의 resolved policy" : "명세값") + ")</summary>" +
       table(["조건", "초기 컨텍스트", "진단", "전략", "복구 컨텍스트", "외부 개입"], conds.map((c) => { const p = conditionPolicy(e, c).policy; return [condChip(c), esc(CTX_KO[p.initial_context] || p.initial_context), esc(DIAG_KO[p.diagnosis] || p.diagnosis), esc(STRAT_KO[p.strategy] || p.strategy), esc(CTX_KO[p.recovery_context] || p.recovery_context), p.external_intervention ? "있음" : "없음"]; })) + "</details></div>" +
       '<figure class="ff" aria-label="B–E 2×2 요인설계"><figcaption>B–E 2×2 요인설계 <span class="muted">(A는 설계 밖 기준선)</span></figcaption>' +
       '<div class="ff-grid"><span></span><span class="ff-h">기본 컨텍스트 DEFAULT</span><span class="ff-h">동적 컨텍스트 DCC</span>' +
       '<span class="ff-h row">일반 진단 FLAT</span>' + cell("B") + cell("C") + '<span class="ff-h row">그래프 진단 GRAPH</span>' + cell("D") + cell("E") + "</div>" +
       '<p class="small">열 방향 = 컨텍스트 주효과 (CTX_MAIN ' + esc(eff(ctr.CTX_MAIN)) + ") · 행 방향 = 그래프 주효과 (GRAPH_MAIN " + esc(eff(ctr.GRAPH_MAIN)) + ") · 상호작용 " + esc(eff(ctr.INTERACTION)) + "</p>" +
-      '<div class="ff-a">' + cell("A") + '<span class="small muted">외부 개입·보조 정보 없음 (Codex 네이티브)</span></div></figure></div>'));
+      '<div class="ff-a">' + cell("A") + '<span class="small muted">외부 개입·보조 정보 없음 (Codex 네이티브)</span></div></figure></div>';
 
     // charts
     const succ = hbars(conds.map((c) => ({ c, label: condName(c), value: cm[c].valid ? cm[c].successes / cm[c].valid : 0,
@@ -840,9 +787,8 @@
     const totBars = hbars(conds.map((c) => ({ c, label: condName(c), value: cm[c].model_tokens_total, text: fmt(cm[c].model_tokens_total),
       tip: COND_LABEL[c] + " · 실행당 평균 " + fmt(cm[c].mean_tokens_per_valid_run) + " 토큰 · 사용량 관측 " + (cm[c].token_coverage || "N/A") })),
       { max: totMax, ticks: [0, totMax / 2, totMax], tickFmt: fmt, aria: "총 모델 토큰" });
-    parts.push('<div class="grid2">' + panel("과제 성공률", succ + '<p class="small muted">독립 평가(비공개 검사) 기준. 막대 옆은 성공 과제 수 / 전체 과제 수. 1회 반복이라 과제 평균 성공률 = 성공 수 ÷ 과제 수.</p>') +
-      panel("성공당 토큰 · 총 토큰", '<h3 class="ch">성공당 토큰 <span class="muted">— 낮을수록 효율 (실패 비용 포함)</span></h3>' + cpsBars +
-        '<h3 class="ch">총 모델 토큰</h3>' + totBars + '<p class="small muted">토큰은 관측값(observe_only)이며 강제 상한이 아니다. 과금액은 미관측.</p>') + "</div>");
+    parts.push('<div class="grid2 charts">' + panel("과제 성공률", succ + '<p class="small muted">독립 평가(비공개 검사) 기준 · 성공 과제 수 / 전체 과제 수</p>') +
+      panel("성공당 토큰", cpsBars + '<p class="small muted">낮을수록 효율 · 실패한 실행의 토큰 포함 · 관측값(observe_only)</p>') + "</div>");
 
     // effects
     const pr = ["E-A", "E-B", "E-C", "E-D", "C-B", "D-B", "CTX_MAIN", "GRAPH_MAIN", "INTERACTION", "P-R3"].filter((k) => ctr[k]);
@@ -852,8 +798,8 @@
     const tok = ctr["P-R1"] ? forest([{ c: ctr["P-R1"], label: "P-R1 CPS(C) − CPS(B)", text: "<strong>" + esc(eff(ctr["P-R1"])) + "</strong> " + ci(ctr["P-R1"]), tip: "성공당 토큰 차이 · 음수면 C가 더 효율" }],
       25000, (t) => (t === 0 ? "0" : (t > 0 ? "+" : "−") + fmt(Math.abs(t))), "성공당 토큰 차이와 95% 구간") : "";
     const boot = ((meta.analysis || {}).bootstrap || {}).iterations;
-    parts.push(panel("효과 크기와 95% 구간", '<div class="callout"><strong>읽는 법.</strong> 점 = 두 조건의 과제 평균 차이, 가로선 = 95% 구간 (과제 군집 bootstrap ' + esc(fmt(boot)) + "회). 구간이 0(세로선)을 지나면 차이의 방향을 결론 내릴 수 없다. 빈 점은 사전 승인된 구간 방법이 없는 탐색적 추정이다.</div>" +
-      '<h3 class="ch">성공률 차이 (%p)</h3>' + fp + (tok ? '<h3 class="ch">성공당 토큰 차이 (RQ1 사전 지정 대비)</h3>' + tok : "") +
+    parts.push(panel("효과 크기와 95% 구간", '<h3 class="ch">성공률 차이 (%p)</h3>' + fp + (tok ? '<h3 class="ch">성공당 토큰 차이 (RQ1 사전 지정 대비)</h3>' + tok : "") +
+      '<p class="small muted">점 = 과제 평균 차이 · 가로선 = 95% 구간 (과제 군집 bootstrap ' + esc(fmt(boot)) + "회) · 구간이 0을 지나면 차이의 방향을 결론 내릴 수 없다 · 빈 점 = 구간 방법이 없는 탐색적 추정</p>" +
       sourceNote(e.public_dir + "/paired_contrasts.csv · seed " + (((meta.analysis || {}).analysis_seed) || "N/A"))));
 
     // task matrix
@@ -868,7 +814,7 @@
         (s.final_public === "PASS" && s.evaluation_status === "FAIL" ? '<span class="pp" title="공개 검사 PASS · 독립 판정 FAIL">공개✓</span>' : "") + "</a>";
     })));
     parts.push(panel("과제 × 조건 판정", table(["과제"].concat(conds.map((c) => c + " " + COND_NAME[c])), mrows, { cls: "matrix" }) +
-      '<div class="legend"><span><span class="sw" style="background:var(--good)"></span>독립 PASS</span><span><span class="sw" style="background:var(--crit)"></span>독립 FAIL</span><span>↻n = 복구 전달 횟수</span><span>공개✓ = 공개 검사는 통과했지만 비공개 검사에서 실패</span><span>칸을 누르면 그 실행의 추적 화면으로 이동</span></div>'));
+      '<p class="small muted">↻n = 복구 전달 횟수 · 공개✓ = 공개 검사는 통과했지만 비공개 검사에서 실패 · 칸을 누르면 실행 추적으로 이동</p>'));
 
     // table + RQ
     const rows = conds.map((c) => {
@@ -877,8 +823,8 @@
         fmt(m.model_tokens_total), m.cps_tokens === null ? "정의 안 됨 (" + esc(m.cps_reason) + ")" : fmt(m.cps_tokens), secs(m.mean_runtime_ms),
         fmt((e.slots || []).filter((s) => s.condition === c).reduce((a, s) => a + (s.recoveries_delivered || 0), 0))];
     });
-    parts.push(panel("조건별 결과 (표)", table(["조건", "계획", "유효", "성공", "실패", "결측", "과제 평균 성공률", "모델 토큰", "성공당 토큰", "평균 실행 시간", "복구 전달"],
-      rows, { numeric: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] }) + sourceNote(e.public_dir + "/metric_summary.csv, run_status.csv")));
+    const statsTable = table(["조건", "계획", "유효", "성공", "실패", "결측", "과제 평균 성공률", "모델 토큰", "성공당 토큰", "평균 실행 시간", "복구 전달"],
+      rows, { numeric: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] }) + sourceNote(e.public_dir + "/metric_summary.csv, run_status.csv");
     const d = e.derived || {};
     const gu = d.graph_use || {};
     const typed = Object.entries(gu).filter(([k]) => !k.startsWith("GENERIC_RETRY")).reduce((a, [, v]) => a + v, 0);
@@ -895,20 +841,21 @@
       ["참고 · 2×2 DCC 주효과", "CTX_MAIN", measured, eff(ctr.CTX_MAIN), ci(ctr.CTX_MAIN), "결론 불충분"],
       ["참고 · 2×2 Graph 주효과", "GRAPH_MAIN", measured, eff(ctr.GRAPH_MAIN), ci(ctr.GRAPH_MAIN), "결론 불충분 — 아래 해석 주의 참고"],
     ].map((r) => r.map((x, i) => (i >= 2 && i <= 4 ? x : esc(x))))) +
-      '<div class="callout"><strong>해석 주의 (사후 기술 분석, 사전 등록 아님).</strong> ' +
+      fold("해석 주의 — 그래프 진단 " + fmt(gtotal) + "회 · 입력이 같은 쌍 " + fmt(pairs.n) + "개 중 판정이 갈린 쌍 " + fmt(pairs.verdict_diverged) + "개", '<p><strong>사후 기술 분석, 사전 등록 아님.</strong> ' +
       "이 실험에서 그래프 진단은 " + fmt(gtotal) + "회 호출됐고, 유형별 전략(RELOCALIZE 등)을 낸 경우는 " + fmt(typed) + "회다. " +
       "B/D와 C/E의 첫 턴 입력은 " + fmt(par.B_equals_D) + "/" + fmt(par.tasks) + ", " + fmt(par.C_equals_E) + "/" + fmt(par.tasks) +
       " 과제에서 바이트 단위로 같았다. 따라서 B–D, C–E 차이는 그래프 전략의 효과로 귀속할 수 없다. 입력이 같은 쌍 " + fmt(pairs.n) +
       "개 중 첫 턴 공개 검사 결과가 갈린 쌍은 " + fmt(pairs.first_turn_diverged) + "개, 최종 판정이 갈린 쌍은 " + fmt(pairs.verdict_diverged) + "개였다." +
       (pairs.verdict_diverged_all_messages_identical || []).map((p) => " 특히 " + esc(p.task_id) + "의 " + esc(p.pair.split("").join("·")) +
         "는 " + esc(p.turns[0]) + "개 턴 모두 바이트 동일한 메시지를 받았지만 판정이 " + esc(p.verdict.join(" / ")) + "로 갈렸다.").join("") +
-      " 1회 반복 설계에서는 모델 비결정성이 조건 간 차이와 같은 크기로 나타난다.</div>" +
+      " 1회 반복 설계에서는 모델 비결정성이 조건 간 차이와 같은 크기로 나타난다.</p>") +
       sourceNote(e.public_dir + "/paired_contrasts.csv · bootstrap " + fmt(boot) + "회, seed " + esc((meta.analysis || {}).analysis_seed))));
+    parts.push(fold("조건 설계 — 정책 정의와 2×2 요인설계", designHtml));
+    parts.push(fold("조건별 상세 통계 표 · 총 모델 토큰", statsTable + '<h3 class="ch">총 모델 토큰</h3>' + totBars + '<p class="small muted">토큰은 관측값(observe_only)이며 강제 상한이 아니다. 과금액은 미관측.</p>'));
     const figs = ((D && D.figures) || {})[state.exp] || {};
     const names = [["success-rate.svg", "성공률"], ["tokens.svg", "토큰과 성공당 토큰"], ["task-matrix.svg", "과제 × 조건 판정"], ["paired-effects.svg", "효과 크기와 95% 구간"]].filter(([n]) => figs[n]);
     if (names.length) {
-      parts.push("<details class=\"panel\"><summary><strong>제출 시점 정적 그림</strong> — 같은 데이터로 생성한 SVG (docs/submission/figures)</summary><div class=\"grid2\">" +
-        names.map(([n, t]) => "<div><h3>" + esc(t) + '</h3><div class="fig">' + figs[n] + "</div></div>").join("") + "</div></details>");
+      parts.push(fold("제출 시점 정적 그림 (같은 데이터의 SVG)", '<div class="grid2">' + names.map(([n, t]) => "<div><h3>" + esc(t) + '</h3><div class="fig">' + figs[n] + "</div></div>").join("") + "</div>"));
     }
     return parts.join("");
   }
@@ -958,7 +905,7 @@
       svg += '<text x="' + x(t).toFixed(1) + '" y="56" text-anchor="' + (k === 0 ? "start" : k === 4 ? "end" : "middle") + '">' + esc(secs(t)) + "</text>";
     }
     svg += "</svg>";
-    return svg + '<div class="legend"><span><span class="sw" style="background:var(--codex)"></span>Codex 실행 (RUN)</span><span><span class="sw" style="background:var(--loop)"></span>하네스 관측·공개 검사 (OBSERVE)</span>' +
+    return '<div class="fig tlfig">' + svg + "</div>" + '<div class="legend"><span><span class="sw" style="background:var(--codex)"></span>Codex 실행 (RUN)</span><span><span class="sw" style="background:var(--loop)"></span>하네스 관측·공개 검사 (OBSERVE)</span>' +
       '<span><span class="sw" style="background:var(--aah)"></span>하네스 결정·진단·컨텍스트 구성</span><span><span class="sw" style="background:var(--mute)"></span>시작·종료</span></div>';
   }
 
@@ -992,30 +939,34 @@
 
   function trace(state) {
     const e = exp(state.exp);
-    const parts = [header(state, ["실행 추적", "한 실행에서 Codex가 한 일(명령·파일 변경)과 하네스가 한 일(공개 검사·감지·개입)을 시간순으로 본다. 명령 원문과 에이전트 메시지는 제한 자료라 포함하지 않는다."])];
+    const parts = [header(state, ["실행 추적", "한 실행에서 Codex가 한 일과 하네스가 한 일을 시간순으로 본다."])];
     if (!e) return parts.join("") + panel("데이터 없음", "<p>선택한 실험의 기록이 없다.</p>");
     parts.push(runPicker(state, e));
     const run = slotRun(e, state.task, state.cond);
     if (!run) return parts.join("") + panel("기록 없음", "<p>이 과제·조건의 실행 기록이 없다 (미실행 또는 진행 중).</p>");
-    const jumps = [linkTo(state, { tab: "context", task: run.task_id, cond: run.condition }, "컨텍스트 패키지 보기", "btn sm")];
-    if ((run.interventions || []).length) jumps.push(linkTo(state, { tab: "replay", case: state.exp + "|" + run.run_id, step: "0" }, "복구 Replay로 보기", "btn sm"));
+    const r = run.report || {};
+    const jumps = [linkTo(state, { tab: "context", task: run.task_id, cond: run.condition }, "컨텍스트", "")];
+    if ((run.interventions || []).length) jumps.push(linkTo(state, { tab: "replay", case: state.exp + "|" + run.run_id, step: "0" }, "복구 Replay", ""));
     const giv = (run.interventions || []).find((iv) => iv.graph_detail);
-    if (giv) jumps.push(linkTo(state, { tab: "graph", gmode: "diag", graph: state.exp + "|" + run.run_id + "|" + giv.intervention_id }, "그래프 진단 보기", "btn sm"));
-    if (repoGraph(run.task_id)) jumps.push(linkTo(state, { tab: "graph", gmode: "repo", rtask: run.task_id }, "이 과제의 코드 구조", "btn sm"));
-    parts.push(panel("실행 요약", runHeader(run, e) + '<div class="jumps">' + jumps.join("") + "</div>"));
-    parts.push(panel("상태 전이 타임라인", timeline(run) + "<details><summary>전이 표 보기</summary>" +
-      table(["#", "시점", "이전", "다음", "사유", "개입"], (run.transitions || []).map((t) => [fmt(t.seq), secs(t.elapsed_ms), esc(t.from), esc(t.to), esc(t.reason), na(t.intervention_id)]), { numeric: [0, 1] }) + "</details>"));
+    if (giv) jumps.push(linkTo(state, { tab: "graph", gmode: "diag", graph: state.exp + "|" + run.run_id + "|" + giv.intervention_id }, "그래프 진단", ""));
+    if (repoGraph(run.task_id)) jumps.push(linkTo(state, { tab: "graph", gmode: "repo", rtask: run.task_id }, "코드 구조", ""));
+    parts.push('<div class="runline"><span class="rl-main">' + condName(run.condition) + " · <strong>" + esc(run.task_id) + "</strong></span>" +
+      "<span>1턴 공개 " + status(run.first_turn_public) + " → 최종 공개 " + status(r.public_check_status) + "</span><span>독립 판정 " + (run.verdict ? status(run.verdict.status) : '<span class="muted">없음</span>') + "</span>" +
+      "<span>턴 " + na(r.turns_used) + " · 복구 " + na(r.recoveries_delivered) + " · " + secs(r.elapsed_ms) + " · 토큰 " + fmt(r.observed_model_tokens) + "</span>" +
+      '<span class="jumps">' + jumps.join(" · ") + "</span></div>");
+    parts.push(panel("상태 전이 타임라인", timeline(run)));
+    if ((run.interventions || []).length) parts.push(panel("개입", (run.interventions || []).map((iv) => interventionCard(iv)).join("")));
+    parts.push(fold("실행 상세 — run_id · 정책 · 종료 · 변경 파일 · 경고", runHeader(run, e)));
+    parts.push(fold("상태 전이 표 " + esc((run.transitions || []).length) + "개", table(["#", "시점", "이전", "다음", "사유", "개입"],
+      (run.transitions || []).map((t) => [fmt(t.seq), secs(t.elapsed_ms), esc(t.from), esc(t.to), esc(t.reason), na(t.intervention_id)]), { numeric: [0, 1] })));
     const turns = [...new Set((run.events || []).map((ev) => ev.turn))];
     const evRows = (run.events || []).map((ev) => [fmt(ev.seq), esc(turnOf(ev.turn)), esc(ev.at ? ev.at.slice(11, 23) : ""), esc(ev.kind), eventDetail(ev), esc(ev.observation)]);
-    parts.push(panel("Codex 실행 이벤트 (정규화 증거 원장)", '<p class="small muted">턴 ' + esc(turns.length) + "개, 이벤트 " + esc(evRows.length) +
-      "개. 명령 원문·출력·에이전트 메시지는 제한 자료라 공개 데이터에 포함하지 않는다.</p>" + table(["#", "턴", "UTC 시각", "종류", "내용", "관측"], evRows, { numeric: [0] })));
-    parts.push('<div class="grid2">' + panel("공개 검사 결과", table(["시점", "검사", "결과", "시간", "파서"], (run.checks || []).map((c) => [esc(turnOf(c.turn)), esc(c.check_id), status(c.status), fmt(c.duration_ms) + "ms", '<code>' + esc(c.parser_id) + "</code>"]))) +
-      panel("턴별 사용량", table(["턴", "단계", "입력", "캐시 입력", "출력", "합계", "턴 시간"], (run.usage || []).map((u) => [esc(turnOf(u.turn)), esc(u.stage), fmt(u.input_tokens), fmt(u.cached_input_tokens), fmt(u.output_tokens), fmt(u.total_tokens), secs(u.elapsed_ms)]), { numeric: [2, 3, 4, 5, 6] }) +
-      "<h3>하네스 로컬 처리 시간</h3>" + table(["단계", "턴", "시간"], (run.overhead || []).map((o) => [esc(o.stage), esc(turnOf(o.turn)), fmt(o.elapsed_ms) + "ms"]), { numeric: [2] })) + "</div>");
-    if ((run.interventions || []).length) {
-      parts.push(panel("개입 기록", (run.interventions || []).map((iv) => interventionCard(iv)).join("") +
-        '<p><a href="' + esc(nav(state, { tab: "replay", case: state.exp + "|" + run.run_id, step: "0" })) + '">이 실행을 복구 Replay로 보기 →</a></p>'));
-    }
+    parts.push(fold("Codex 실행 이벤트 " + esc(evRows.length) + "개 · 턴 " + esc(turns.length) + "개 (정규화 증거 원장)", '<p class="small muted">명령 원문·출력·에이전트 메시지는 제한 자료라 공개 데이터에 포함하지 않는다.</p>' +
+      table(["#", "턴", "UTC 시각", "종류", "내용", "관측"], evRows, { numeric: [0] })));
+    parts.push(fold("공개 검사 · 턴별 사용량 · 하네스 처리 시간", '<div class="grid2"><div><h3>공개 검사 결과</h3>' +
+      table(["시점", "검사", "결과", "시간", "파서"], (run.checks || []).map((c) => [esc(turnOf(c.turn)), esc(c.check_id), status(c.status), fmt(c.duration_ms) + "ms", '<code>' + esc(c.parser_id) + "</code>"])) +
+      "</div><div><h3>턴별 사용량</h3>" + table(["턴", "단계", "입력", "캐시 입력", "출력", "합계", "턴 시간"], (run.usage || []).map((u) => [esc(turnOf(u.turn)), esc(u.stage), fmt(u.input_tokens), fmt(u.cached_input_tokens), fmt(u.output_tokens), fmt(u.total_tokens), secs(u.elapsed_ms)]), { numeric: [2, 3, 4, 5, 6] }) +
+      "<h3>하네스 로컬 처리 시간</h3>" + table(["단계", "턴", "시간"], (run.overhead || []).map((o) => [esc(o.stage), esc(turnOf(o.turn)), fmt(o.elapsed_ms) + "ms"]), { numeric: [2] }) + "</div></div>"));
     return parts.join("");
   }
 
@@ -1065,36 +1016,36 @@
 
   function context(state) {
     const e = exp(state.exp);
-    const parts = [header(state, ["컨텍스트", "Codex에 보낸 보조 정보가 어떻게 골라졌는지 본다. 사용자 요청과 필수 지침은 모든 조건에서 같고, 최적화 대상은 보조 정보뿐이다. 프롬프트 원문은 공개 데이터에 없다."])];
+    const parts = [header(state, ["컨텍스트", "Codex에 보낸 보조 정보가 어떻게 골라졌는지 본다. 사용자 요청과 필수 지침은 모든 조건에서 같다."])];
     if (!e) return parts.join("") + panel("데이터 없음", "<p>선택한 실험의 기록이 없다.</p>");
     parts.push(runPicker(state, e));
     const run = slotRun(e, state.task, state.cond);
     if (!run) return parts.join("") + panel("기록 없음", "<p>이 과제·조건의 실행 기록이 없다.</p>");
-    parts.push(panel("DEFAULT와 DCC는 무엇이 다른가", table(["", "A (NONE)", "DEFAULT (B·D)", "DCC (C·E)"], [
-      ["보조 정보", "없음 — 요청·필수 지침만", "공통 최소 근거를 그대로", "후보를 점수로 골라 담음"],
-      ["점수 (관련성·유효성·범위·실패)", "—", "없음", "있음 (BM25 + 가중합)"],
-      ["중복 병합", "—", "없음", "있음"],
-      ["예산 패킹", "—", "B–E 공통 상한만 적용", "한계 효용 순으로 상한 안에서 선택"],
-      ["필수 근거·지침", "같은 경로로 전달", "항상 포함", "항상 포함 (점수 없음)"],
-    ].map((r) => r.map(esc))) + '<p class="small muted">공통 상한·필수 근거·직렬화 형식은 B–E가 같다. 초기 입력이 같으면 B/D, C/E의 패키지는 바이트 단위로 같아야 한다 (CT03).</p>'));
     const pkgs = run.context || [];
     if (!pkgs.length) parts.push(panel("컨텍스트 기록 없음", "<p>이 실행에는 컨텍스트 패키지 기록이 없다.</p>"));
     for (const pkg of pkgs) {
       const used = pkg.estimated_supplement_tokens, cap = pkg.cap_tokens;
       const ratio = isNum(used) && isNum(cap) && cap > 0 ? Math.min(used / cap, 1) : 0;
       const total = (pkg.decisions || []).length, sel = (pkg.decisions || []).filter((d) => d.selected).length;
-      const note = pkg.policy === "NONE" ? '<div class="callout">조건 A는 보조 영역이 비어 있다. 사용자 요청과 필수 지침만 같은 경로로 전달한다 (CT07).</div>'
-        : pkg.policy === "DEFAULT" ? '<div class="callout">DEFAULT는 공통 최소 근거를 그대로 담는다. DCC 전용 점수·중복 제거·한계 효용 패킹을 쓰지 않으므로 점수 열은 비어 있다 (—).</div>'
-          : '<div class="callout">DCC는 후보마다 관련성(BM25)·유효성·범위·실패 연관성 점수를 매기고, 예산 안에서 한계 효용이 양수인 항목만 담는다. 필수 지침과 핵심 근거(CORE_REQUIRED)는 점수 없이 유지하고, 중복(MERGED_DUPLICATE)은 하나로 합친다 (— = 점수 미적용). 점수 구성 막대는 기록된 구성 요소에 정책 가중치를 곱한 합이 기록된 점수와 일치할 때만 그린다.</div>';
-      parts.push(panel((pkg.stage === "RECOVERY" ? "복구" : "최초") + " 패키지 · " + pkg.policy + (pkg.strategy_id ? " · " + pkg.strategy_id : ""), pipeline(pkg) + note +
-        '<div class="tiles">' + tile("보조 정보 추정 토큰", fmt(used), "상한 " + fmt(cap) + " (" + pct(ratio) + ")") + tile("전체 메시지 추정 토큰", fmt(pkg.estimated_full_tokens), pkg.estimator_id || "") +
-        tile("선택 / 후보", sel + " / " + total, "핵심 근거 " + fmt(pkg.core_count)) + tile("구성 시간", fmt(pkg.elapsed_ms) + "ms", "로컬 처리, 전체 비용에 포함") + "</div>" +
+      const note = pkg.policy === "NONE" ? "조건 A는 보조 영역이 비어 있다. 사용자 요청과 필수 지침만 같은 경로로 전달한다 (CT07)."
+        : pkg.policy === "DEFAULT" ? "DEFAULT는 공통 최소 근거를 그대로 담는다. 점수·중복 제거·한계 효용 패킹을 쓰지 않는다."
+          : "DCC는 후보마다 관련성·유효성·범위·실패 연관성 점수를 매기고, 예산 안에서 한계 효용이 양수인 항목만 담는다. 필수 근거는 점수 없이 유지한다.";
+      parts.push(panel((pkg.stage === "RECOVERY" ? "복구" : "최초") + " 패키지 · " + pkg.policy + (pkg.strategy_id ? " · " + pkg.strategy_id : ""), pipeline(pkg) +
+        '<div class="tiles">' + tile("선택 / 후보", sel + " / " + total, "핵심 근거 " + fmt(pkg.core_count)) + tile("보조 정보 추정 토큰", fmt(used), "상한 " + fmt(cap) + " (" + pct(ratio) + ")") +
+        tile("전체 메시지 추정 토큰", fmt(pkg.estimated_full_tokens), pkg.estimator_id || "") + tile("구성 시간", fmt(pkg.elapsed_ms) + "ms", "로컬 처리") + "</div>" +
         '<div class="meterrow"><span class="small muted">예산 사용</span><div class="meter" role="meter" aria-valuemin="0" aria-valuemax="' + esc(cap) + '" aria-valuenow="' + esc(used) + '" aria-label="보조 정보 예산 사용량"><span style="width:' + (ratio * 100).toFixed(1) + '%"></span></div><span class="small">' + esc(fmt(used) + " / " + fmt(cap)) + "</span></div>" +
-        (pkg.policy === "DCC" ? '<div class="legend"><span><span class="sw sb-relevance"></span>관련성</span><span><span class="sw sb-scope"></span>범위</span><span><span class="sw sb-validity"></span>유효성</span><span><span class="sw sb-failure"></span>실패 연관</span><span>막대 전체 폭 = 점수 1.0</span></div>' : "") +
-        contextTable(pkg) + "<details><summary>패키지 메타데이터</summary>" +
-        kv([["상태 · 경고", esc(pkg.status) + " · " + esc((pkg.warnings || []).join(", ") || "없음")], ["검색 방식", esc(pkg.retrieval_version || "N/A")],
-          ["package_hash", hashFull(pkg.package_hash)], ["message_hash", hashFull(pkg.message_hash)]]) + "</details>"));
+        '<p class="small muted">' + esc(note) + "</p>" +
+        fold("선택·제외 항목 " + esc(total) + "개 — 이유와 점수 구성", (pkg.policy === "DCC" ? '<div class="legend"><span><span class="sw sb-relevance"></span>관련성</span><span><span class="sw sb-scope"></span>범위</span><span><span class="sw sb-validity"></span>유효성</span><span><span class="sw sb-failure"></span>실패 연관</span><span>막대 전체 폭 = 점수 1.0 · 기록된 점수와 일치할 때만 표시</span></div>' : "") +
+          contextTable(pkg) + kv([["상태 · 경고", esc(pkg.status) + " · " + esc((pkg.warnings || []).join(", ") || "없음")], ["검색 방식", esc(pkg.retrieval_version || "N/A")],
+            ["package_hash", hashFull(pkg.package_hash)], ["message_hash", hashFull(pkg.message_hash)]]))));
     }
+    parts.push(fold("DEFAULT와 DCC는 무엇이 다른가", table(["", "A (NONE)", "DEFAULT (B·D)", "DCC (C·E)"], [
+      ["보조 정보", "없음 — 요청·필수 지침만", "공통 최소 근거를 그대로", "후보를 점수로 골라 담음"],
+      ["점수 (관련성·유효성·범위·실패)", "—", "없음", "있음 (BM25 + 가중합)"],
+      ["중복 병합", "—", "없음", "있음"],
+      ["예산 패킹", "—", "B–E 공통 상한만 적용", "한계 효용 순으로 상한 안에서 선택"],
+      ["필수 근거·지침", "같은 경로로 전달", "항상 포함", "항상 포함 (점수 없음)"],
+    ].map((row) => row.map(esc))) + '<p class="small muted">공통 상한·필수 근거·직렬화 형식은 B–E가 같다.</p>'));
     const rows = COND.map((c) => {
       const r = slotRun(e, state.task, c);
       const p = r && (r.context || []).find((x) => x.stage === "INITIAL");
@@ -1102,11 +1053,11 @@
       return { c, p, h };
     });
     const same = (a, b) => a.h && a.h === b.h;
-    parts.push(panel("같은 과제의 조건별 최초 패키지 비교", table(["조건", "정책", "보조 정보 추정 토큰", "선택 / 후보", "최초 메시지 해시", "동일성"], rows.map((x) => [condName(x.c),
+    parts.push(fold("같은 과제의 조건별 최초 패키지 비교 (CT03 바이트 동일성)", table(["조건", "정책", "보조 정보 추정 토큰", "선택 / 후보", "최초 메시지 해시", "동일성"], rows.map((x) => [condName(x.c),
       esc(x.p ? x.p.policy : "N/A"), fmt(x.p ? x.p.estimated_supplement_tokens : null), x.p ? esc((x.p.decisions || []).filter((d) => d.selected).length + " / " + (x.p.decisions || []).length) : "N/A",
       hashShort(x.h, 16), x.c === "D" ? (same(rows[1], rows[3]) ? '<span class="badge good">B와 바이트 동일</span>' : '<span class="badge crit">B와 다름</span>')
         : x.c === "E" ? (same(rows[2], rows[4]) ? '<span class="badge good">C와 바이트 동일</span>' : '<span class="badge crit">C와 다름</span>') : ""]), { numeric: [2] }) +
-      '<p class="small muted">CT03 계약: 초기 입력이 같으면 B/D, C/E의 외부 패키지는 바이트 단위로 같아야 한다. 이 표는 실제 라이브 실행 기록에서 그 계약을 다시 확인한다.</p>'));
+      '<p class="small muted">초기 입력이 같으면 B/D, C/E의 외부 패키지는 바이트 단위로 같아야 한다. 실제 라이브 기록에서 다시 확인한다.</p>'));
     return parts.join("");
   }
 
@@ -1315,12 +1266,16 @@
   }
 
   function graphTools(m, diag) {
+    return '<div class="gtool" role="toolbar" aria-label="그래프 보기 도구"><button type="button" class="btn sm" data-gz="in" aria-label="확대">＋</button><button type="button" class="btn sm" data-gz="out" aria-label="축소">－</button>' +
+      '<button type="button" class="btn sm" data-gz="fit">전체 맞춤</button><button type="button" class="btn sm" data-gz="reset">초기화</button>' + (diag ? '<button type="button" class="btn sm" data-gpath aria-pressed="false">탐색 경로만 강조</button>' : "") +
+      '<span class="small muted gtip">드래그로 이동 · Ctrl+휠로 확대</span></div>';
+  }
+
+  function graphFilters(m) {
     const kinds = KIND_ORDER.filter((k) => m.nodes.some((n) => n.kind === k)).concat([...new Set(m.nodes.map((n) => n.kind))].filter((k) => !KIND_ORDER.includes(k)));
     const groups = ["contains", "imports", "calls", "inherits", "tests", "cross", "exec"].filter((g) => m.edges.some((ed) => relGroup(ed.rel) === g));
-    return '<div class="gtool" role="toolbar" aria-label="그래프 보기 도구"><span class="tg"><button type="button" class="btn sm" data-gz="in" aria-label="확대">＋</button><button type="button" class="btn sm" data-gz="out" aria-label="축소">－</button>' +
-      '<button type="button" class="btn sm" data-gz="fit">전체 맞춤</button><button type="button" class="btn sm" data-gz="reset">초기화</button>' + (diag ? '<button type="button" class="btn sm" data-gpath aria-pressed="false">탐색 경로만 강조</button>' : "") + "</span>" +
-      '<span class="tg"><span class="tl2">노드</span>' + kinds.map((k) => '<button type="button" class="fchip k-' + esc(k) + '" data-gf="k:' + esc(k) + '" aria-pressed="true"><span class="kd"></span>' + esc((KIND[k] || {}).tag || k) + " " + m.nodes.filter((n) => n.kind === k).length + "</button>").join("") + "</span>" +
-      '<span class="tg"><span class="tl2">관계</span>' + groups.map((g) => '<button type="button" class="fchip r-' + g + '" data-gf="r:' + g + '" aria-pressed="true"><span class="ld"></span>' + esc(REL_GROUP[g]) + "</button>").join("") + "</span></div>";
+    return '<div class="gfilters" role="group" aria-label="노드·관계 필터"><p class="tl2">노드</p><div class="chips">' + kinds.map((k) => '<button type="button" class="fchip k-' + esc(k) + '" data-gf="k:' + esc(k) + '" aria-pressed="true"><span class="kd"></span>' + esc((KIND[k] || {}).tag || k) + " " + m.nodes.filter((n) => n.kind === k).length + "</button>").join("") +
+      '</div><p class="tl2">관계</p><div class="chips">' + groups.map((g) => '<button type="button" class="fchip r-' + g + '" data-gf="r:' + g + '" aria-pressed="true"><span class="ld"></span>' + esc(REL_GROUP[g]) + "</button>").join("") + "</div></div>";
   }
 
   function graphLegend(diag) {
@@ -1331,22 +1286,22 @@
       (diag ? '<span><span class="lsw r-cross"></span>교차 연결</span><span><span class="lsw r-exec"></span>실행 관계</span>' : "") + "</div>";
   }
 
-  function warningsPanel(m, title) {
+  function warningsBody(m) {
     const groups = {};
     (m.warnings || []).forEach((w) => { const k = String(w).split(":")[0]; (groups[k] = groups[k] || []).push(w); });
     const rows = Object.keys(groups).sort().map((k) => [esc(k), fmt(groups[k].length), esc(WARN[k] || "")]);
-    return panel(title || "미해결 관계와 경고", (rows.length ? table(["종류", "개수", "의미"], rows, { numeric: [1] }) : '<p class="muted">경고 없음</p>') +
+    return (rows.length ? table(["종류", "개수", "의미"], rows, { numeric: [1] }) : '<p class="muted">경고 없음</p>') +
       ((m.unresolved || []).length ? "<h3>연결하지 않은 교차 관계</h3>" + table(["관계", "사유", "노드"], m.unresolved.map((u) => [esc(u.relation), esc(u.reason), esc(((m.nodes.find((n) => n.id === u.node)) || {}).label || u.node || "")])) : "") +
       "<details><summary>경고 원문 " + esc((m.warnings || []).length) + "개</summary><ul class=\"mono small\">" + (m.warnings || []).map((w) => "<li>" + esc(w) + "</li>").join("") + "</ul></details>" +
-      '<p class="small muted">빌더는 근거 없는 관계를 만들지 않는다. 경고는 연결을 포기한 지점이며 오류가 아니다.</p>');
+      '<p class="small muted">빌더는 근거 없는 관계를 만들지 않는다. 경고는 연결을 포기한 지점이며 오류가 아니다.</p>';
   }
 
   function graphCanvas(m, lay, diag, aria, state) {
     LAST_GRAPH = m;
     const sel = state.gnode && m.nodes.some((n) => n.id === state.gnode) ? state.gnode : "";
-    const h = Math.max(300, Math.min(720, Math.round(lay.H * 0.9)));
-    return graphTools(m, diag) + '<div class="gbox"><div class="gview" data-vb="0 0 ' + lay.W + " " + lay.H + '" data-sel="' + esc(sel) + '" style="height:' + h + "px;--gw:" + lay.W + 'px">' + graphSvg(m, lay, { aria }) + "</div>" +
-      '<aside class="gdetail" aria-live="polite" aria-label="선택한 노드 정보">' + (sel ? nodeDetail(m, sel) : graphIntro(m)) + "</aside></div>" + graphLegend(diag);
+    const h = Math.max(240, Math.min(720, Math.round(lay.H * 1.05)));
+    return '<div class="gbox"><div class="gmain">' + graphTools(m, diag) + '<div class="gview" data-vb="0 0 ' + lay.W + " " + lay.H + '" data-sel="' + esc(sel) + '" style="height:' + h + "px;--gw:" + lay.W + 'px">' + graphSvg(m, lay, { aria }) + "</div>" + graphLegend(diag) + "</div>" +
+      '<aside class="gside"><div class="gdetail" aria-live="polite" aria-label="선택한 노드 정보">' + (sel ? nodeDetail(m, sel) : graphIntro(m)) + "</div>" + graphFilters(m) + "</aside></div>";
   }
 
   function compareWithRuns(state, task, m) {
@@ -1372,17 +1327,16 @@
   }
 
   function graph(state) {
-    const parts = [header(state, ["그래프 탐색", "코드 구조(Repository Graph)와 실행 증거(Execution Graph), 둘을 잇는 Cross-Graph Mapping을 탐색한다. 원인 후보는 가설이며 확인된 원인이 아니다."])];
+    const parts = [header(state, ["그래프 탐색", "코드 구조(Repository Graph)와 실행 증거(Execution Graph), 둘을 잇는 연결을 탐색한다. 원인 후보는 가설이다."])];
     const entries = graphEntries(state);
     const tasks = repoTasks();
     const mode = state.gmode === "diag" || (!state.gmode && state.graph) ? "diag" : tasks.length ? "repo" : "diag";
-    parts.push('<div class="segs modes" role="group" aria-label="그래프 보기 방식">' +
-      '<a class="seg' + (mode === "repo" ? " on" : "") + '" aria-current="' + (mode === "repo") + '" href="' + esc(nav(state, { tab: "graph", gmode: "repo", rtask: state.rtask })) + '">과제별 Repository Graph <span class="muted">(' + tasks.length + ")</span></a>" +
-      '<a class="seg' + (mode === "diag" ? " on" : "") + '" aria-current="' + (mode === "diag") + '" href="' + esc(nav(state, { tab: "graph", gmode: "diag", graph: state.graph })) + '">그래프 진단 기록 <span class="muted">(' + entries.length + ")</span></a></div>");
+    const modes = '<div class="segs modes" role="group" aria-label="그래프 보기 방식">' +
+      '<a class="seg' + (mode === "repo" ? " on" : "") + '" aria-current="' + (mode === "repo") + '" href="' + esc(nav(state, { tab: "graph", gmode: "repo", rtask: state.rtask })) + '">과제별 Repository Graph</a>' +
+      '<a class="seg' + (mode === "diag" ? " on" : "") + '" aria-current="' + (mode === "diag") + '" href="' + esc(nav(state, { tab: "graph", gmode: "diag", graph: state.graph })) + '">그래프 진단 기록 <span class="muted">' + entries.length + "</span></a></div>";
     if (mode === "repo") {
-      if (!tasks.length) return parts.join("") + panel("Repository Graph 없음", "<p>이 페이지에는 과제별 Repository Graph 데이터가 없다 (<code>python -m analysis.repository_graphs build</code>).</p>");
+      if (!tasks.length) return parts.join("") + modes + panel("Repository Graph 없음", "<p>이 페이지에는 과제별 Repository Graph 데이터가 없다 (<code>python -m analysis.repository_graphs build</code>).</p>");
       const task = tasks.includes(state.rtask) ? state.rtask : (picks(state).repo || {}).task_id || tasks[0];
-      if (state.rtask && state.rtask !== task) parts.push('<div class="callout warn" role="status"><strong>주소 확인.</strong> 요청한 과제 \'' + esc(state.rtask) + "'의 그래프가 없어 " + esc(task) + "를 표시한다.</div>");
       const g = repoGraph(task);
       const m = modelFromRepo(g);
       const lay = gLayout(m);
@@ -1392,27 +1346,27 @@
       const rc = {};
       g.edges.forEach((ed) => { rc[ed.relation] = (rc[ed.relation] || 0) + 1; });
       const testFnInTests = g.nodes.filter((n) => n.kind === "FUNCTION" && isTestPath(n.path) && /(^|\.)test_/.test(n.qualified_name || "")).length;
-      parts.push('<div class="filters" role="group" aria-label="과제 선택">' + select("rtask", task, tasks.map((t) => { const x = repoGraph(t); return [t, t + " · " + x.repo_id + " · " + x.task_family_id]; }), "과제") +
-        '<span class="chip">' + icon("code", "sm") + "현재 저장소에서 재추출 · 실험 시점 기록 아님</span></div>");
-      parts.push('<div class="tiles">' + tile("노드", fmt(g.nodes.length), KIND_ORDER.filter((k) => counts[k]).map((k) => k + " " + counts[k]).join(" · ")) +
-        tile("관계", fmt(g.edges.length), Object.keys(rc).sort().map((k) => k + " " + rc[k]).join(" · ")) + tile("수정 허용 파일", (g.allowed_change_paths || []).join(", ") || "N/A", "task.json allowed_change_paths") +
-        tile("빌더 상태", g.status, (g.warnings || []).length + "개 경고 · " + (prov.builder_version || "")) + tile("공개 검사", (g.approved_check_ids || []).length + "개", (g.approved_check_ids || []).join(", ")) + "</div>");
-      parts.push(panel(task + " — Repository Graph", '<p class="small">왼쪽부터 <strong>공개 검사 코드 → 수정 허용 파일 → 의존 모듈</strong> 순으로 놓았다. 파일 상자 안에 그 파일이 포함한 클래스·함수가 들어 있다 (CONTAINS). 곡선은 호출(CALLS)·import(IMPORTS) 관계다.</p>' +
-        (!counts.TEST_FUNCTION && testFnInTests ? '<div class="callout warn"><strong>테스트 함수가 FUNCTION으로 기록됨.</strong> 빌더는 <code>Test</code>로 시작하는 클래스 안의 <code>test_</code> 메서드만 TEST_FUNCTION으로 인식한다. 이 과제의 검사 클래스 이름(' +
-          esc(g.nodes.filter((n) => n.kind === "CLASS" && isTestPath(n.path)).map((n) => n.qualified_name).join(", ")) + ")은 이 규칙에 맞지 않아 테스트 메서드 " + testFnInTests + "개가 FUNCTION, 그 호출이 CALLS로 기록됐고 TESTS 관계는 0개다. 대시보드는 기록을 바꾸지 않고 그대로 보여 준다 (개선 과제).</div>" : "") +
-        graphCanvas(m, lay, false, task + " Repository Graph", state) +
-        sourceNote("public_data/repository_graphs/" + task + ".json · " + (prov.source || "") + " · source revision " + short(prov.source_revision, 12) + "… · " + (prov.builder || "") + " " + (prov.builder_version || "") + " · 모델 호출 0")));
-      parts.push(panel("실험 시점 그래프와 대조", compareWithRuns(state, task, m)) + warningsPanel(m, "미해결 관계와 경고"));
+      parts.push('<div class="gbar">' + modes + select("rtask", task, tasks.map((t) => { const x = repoGraph(t); return [t, t + " · " + x.repo_id + " · " + x.task_family_id]; }), "과제") + "</div>");
+      if (state.rtask && state.rtask !== task) parts.push('<div class="callout warn" role="status"><strong>주소 확인.</strong> 요청한 과제 \'' + esc(state.rtask) + "'의 그래프가 없어 " + esc(task) + "를 표시한다.</div>");
+      parts.push('<p class="statline"><strong>' + esc(task) + "</strong> · 노드 " + fmt(g.nodes.length) + " · 관계 " + fmt(g.edges.length) + " · 수정 허용 <code>" + esc((g.allowed_change_paths || []).join(", ") || "N/A") +
+        "</code> · 공개 검사 " + (g.approved_check_ids || []).length + '개 · <span class="muted">현재 저장소에서 재추출 (실험 시점 기록 아님)</span></p>');
+      parts.push(graphCanvas(m, lay, false, task + " Repository Graph", state));
+      parts.push(fold("이 그래프 읽는 법", "<p>왼쪽부터 <strong>공개 검사 코드 → 수정 허용 파일 → 의존 모듈</strong> 순으로 놓았다. 파일 상자 안에 그 파일이 포함한 클래스·함수가 들어 있고(CONTAINS), 곡선은 호출(CALLS)·import(IMPORTS) 관계다.</p>" +
+        kv([["노드", esc(KIND_ORDER.filter((k) => counts[k]).map((k) => k + " " + counts[k]).join(" · "))], ["관계", esc(Object.keys(rc).sort().map((k) => k + " " + rc[k]).join(" · "))], ["빌더", esc(g.status + " · " + (prov.builder_version || ""))]]) +
+        (!counts.TEST_FUNCTION && testFnInTests ? "<p><strong>테스트 함수가 FUNCTION으로 기록됨.</strong> 빌더는 <code>Test</code>로 시작하는 클래스 안의 <code>test_</code> 메서드만 TEST_FUNCTION으로 인식한다. 이 과제의 검사 클래스(" +
+          esc(g.nodes.filter((n) => n.kind === "CLASS" && isTestPath(n.path)).map((n) => n.qualified_name).join(", ")) + ")는 이 규칙에 맞지 않아 테스트 메서드 " + testFnInTests + "개가 FUNCTION, 그 호출이 CALLS로 기록됐고 TESTS 관계는 0개다. 기록을 바꾸지 않고 그대로 보여 준다 (개선 과제).</p>" : "") +
+        sourceNote("public_data/repository_graphs/" + task + ".json · " + (prov.source || "") + " · source revision " + short(prov.source_revision, 12) + "… · " + (prov.builder || "") + " · 모델 호출 0")));
+      parts.push(fold("실험 시점 그래프와 대조", compareWithRuns(state, task, m)));
+      parts.push(fold("미해결 관계와 경고 " + esc((g.warnings || []).length) + "개", warningsBody(m)));
       return parts.join("");
     }
-    if (!entries.length) return parts.join("") + panel("그래프 진단 기록 없음", "<p>이 데이터 기준에는 그래프 진단이 기록된 실행이 없다. 그래프 진단은 조건 D·E에서 개입이 일어난 실행에만 있다. 위의 <strong>과제별 Repository Graph</strong>에서 코드 구조는 볼 수 있다.</p>");
+    if (!entries.length) return parts.join("") + modes + panel("그래프 진단 기록 없음", "<p>이 데이터 기준에는 그래프 진단이 기록된 실행이 없다. 그래프 진단은 조건 D·E에서 개입이 일어난 실행에만 있다.</p>");
     const cur = entries.find((x) => x.key === state.graph) || picks(state).graphLive || entries[0];
-    if (state.graph && cur.key !== state.graph) parts.push('<div class="callout warn" role="status"><strong>주소 확인.</strong> 요청한 그래프 진단 기록을 이 데이터 기준에서 찾지 못해 대표 사례를 표시한다.</div>');
     const groups = [...new Set(entries.map((x) => x.group))];
-    parts.push('<div class="filters"><label>그래프 진단 기록<select data-key="graph">' + groups.map((g) => '<optgroup label="' + esc(g) + '">' +
+    parts.push('<div class="gbar">' + modes + '<label>그래프 진단 기록<select data-key="graph">' + groups.map((g) => '<optgroup label="' + esc(g) + '">' +
       entries.filter((x) => x.group === g).map((x) => '<option value="' + esc(x.key) + '"' + (x === cur ? " selected" : "") + ">" +
-        esc((x.run.scenario || x.run.task_id) + " · " + x.run.condition + " · " + x.iv.intervention_id + " → " + x.iv.strategy) + "</option>").join("") + "</optgroup>").join("") + "</select></label>" +
-      (cur.live ? '<span class="chip good">라이브 실행 기록</span>' : '<span class="chip warn">합성 검증 · 라이브 아님</span>') + "</div>");
+        esc((x.run.scenario || x.run.task_id) + " · " + x.run.condition + " · " + x.iv.intervention_id + " → " + x.iv.strategy) + "</option>").join("") + "</optgroup>").join("") + "</select></label></div>");
+    if (state.graph && cur.key !== state.graph) parts.push('<div class="callout warn" role="status"><strong>주소 확인.</strong> 요청한 그래프 진단 기록을 이 데이터 기준에서 찾지 못해 대표 사례를 표시한다.</div>');
     const gd = cur.iv.graph_detail;
     const tr = gd.trace || {};
     const m = modelFromDetail(gd, cur.run.task_id);
@@ -1424,38 +1378,34 @@
     (gd.unresolved || []).forEach((u) => { const k = u.relation + ": " + u.reason; reasons[k] = (reasons[k] || 0) + 1; });
     const parsers = [...new Set((cur.run.checks || []).map((c) => c.parser_id))];
     const frames = (cur.run.checks || []).flatMap((c) => c.cases || []).filter((c) => c.status === "FAIL");
-    if (!cur.exp) parts.push('<div class="callout warn"><strong>S3 합성 검증 기록.</strong> 스크립트 어댑터가 예정된 코드를 작성했고 모델 호출은 0건이다. 그래프 진단 메커니즘의 동작 증거이며, 라이브 실험 결과가 아니다.</div>');
-    else if (cur.exp.experiment_id !== state.exp) parts.push(statusBanner(cur.exp));
+    parts.push(cur.live ? '<div class="livebar live"><strong>라이브 실행 기록</strong> · ' + esc(label(cur.exp.experiment_id)) + "</div>"
+      : '<div class="livebar syn"><strong>합성 검증 — 라이브 아님</strong> · 스크립트 어댑터, 모델 호출 0건. 진단 메커니즘의 동작 증거이며 실험 결과가 아니다.</div>');
+    if (cur.exp && cur.exp.experiment_id !== state.exp) parts.push(statusBanner(cur.exp));
     const flow = [
-      ["실패 앵커", fmt((tr.anchor_ids || []).length) + "개", "관측된 실패에서 탐색을 시작"],
-      ["교차 연결", fmt(cross) + "개", cross ? "검증된 테스트 ID·frame·diff로 실행↔코드 연결" : "검증된 근거가 없어 연결하지 않음"],
-      ["제한 탐색", fmt(tr.visited_count) + " 방문", "깊이 " + tr.depth_limit + " · 방문 " + tr.visit_limit + " · 분기 " + tr.branch_limit + " · " + (tr.termination || "") + (tr.truncated ? " · 잘림" : "")],
-      ["원인 후보", fmt((tr.candidates || []).length) + "개", (tr.candidates || []).length ? "가설 — 경로 " + (tr.paths || []).length + "개" : "앵커에서 코드로 가는 경로 없음"],
+      ["실패 앵커", fmt((tr.anchor_ids || []).length) + "개", "관측된 실패에서 탐색 시작"],
+      ["교차 연결", fmt(cross) + "개", cross ? "검증된 근거로 실행↔코드 연결" : "검증된 근거가 없어 연결하지 않음"],
+      ["제한 탐색", fmt(tr.visited_count) + " 방문", "깊이 " + tr.depth_limit + " · 방문 " + tr.visit_limit + " · " + (tr.termination || "")],
+      ["원인 후보", fmt((tr.candidates || []).length) + "개", (tr.candidates || []).length ? "가설 — 경로 " + (tr.paths || []).length + "개" : "코드로 가는 경로 없음"],
       ["전략", cur.iv.strategy || "N/A", (cur.iv.graph || {}).fallback_reason ? "대체: " + cur.iv.graph.fallback_reason : "유형별 근거 있음"],
     ];
     parts.push('<ol class="pipe diag" aria-label="그래프 진단 단계">' + flow.map(([t, v, d], i) => '<li class="' + (i === 1 && !cross ? "warnstep" : "") + '"><span class="pn">' + (i + 1) + "</span><strong>" + esc(t) + '</strong><span class="pv">' + esc(v) + '</span><span class="pd">' + esc(d) + "</span></li>").join("") + "</ol>");
+    parts.push(graphCanvas(m, lay, true, "결합 그래프", state));
+    parts.push('<p class="small muted">노드 ' + fmt((gd.nodes || []).length) + " (코드 " + repoN + " · 실행 " + ((gd.nodes || []).length - repoN) + ") · 엣지 " + fmt((gd.edges || []).length) + " · 미해결 연결 " + fmt((gd.unresolved || []).length) +
+      " · 그래프 상태 " + esc(gd.status || "N/A") + " · run " + esc(short(cur.run.run_id, 8)) + "… · 노드·엣지 ID는 앞 16자" +
+      (repoGraph(cur.run.task_id) ? " · " + linkTo(state, { tab: "graph", gmode: "repo", rtask: cur.run.task_id }, "이 과제의 전체 Repository Graph", "") : "") + "</p>");
     const explain = cross === 0
-      ? '<div class="callout warn"><strong>왜 원인 후보가 0개인가 (기록에서 확인).</strong> 이 결합 그래프에는 코드↔실행 교차 연결이 0개다. 미해결 기록: ' +
-        esc(Object.entries(reasons).map(([k, v]) => k + " " + v + "건").join(", ") || "없음") + ". 공개 검사 파서 " +
-        esc(parsers.join(", ")) + "는 suite 단위 결과만 남겨, 실패 사례 " + esc(frames.length) + "건 모두 traceback frame이 없고 테스트 ID가 검사 ID(" +
-        esc([...new Set(frames.map((f) => f.test_id))].join(", ")) + ")다. 매핑 규칙은 근거 없는 TESTS_TARGET·FAILS_AT를 만들지 않으므로 앵커에서 코드 노드로 가는 경로가 없고, " +
-        "정책은 <code>INSUFFICIENT_TYPED_EVIDENCE</code>로 GENERIC_RETRY를 선택했다. 개선 방향: 공개 검사 결과를 테스트 함수·frame 단위로 기록.</div>"
-      : '<div class="callout"><strong>교차 연결 ' + esc(cross) + "개.</strong> 실패 앵커에서 TESTS_TARGET 등 근거 있는 연결을 따라 코드 노드까지 도달했고, 후보 " + esc((tr.candidates || []).length) +
-        "개와 경로 " + esc((tr.paths || []).length) + "개를 기록했다. 후보는 원인 확정이 아니라 가설(observation=inferred)이다. <strong>탐색 경로만 강조</strong>를 누르면 경로가 보인다.</div>";
-    parts.push('<div class="tiles">' + tile("그래프 상태", gd.status || "N/A", "builder " + (gd.builder_version || "")) +
-      tile("노드", fmt((gd.nodes || []).length), "코드 " + repoN + " · 실행 " + ((gd.nodes || []).length - repoN)) +
-      tile("엣지", fmt((gd.edges || []).length), "교차 연결 " + cross + "개") +
-      tile("미해결 연결", fmt((gd.unresolved || []).length), "근거 없는 연결은 만들지 않음") +
-      tile("탐색 종료", tr.termination || "N/A", tr.truncated ? "truncated=true (분기·후보 상한 적용)" : "truncated=false") + "</div>");
-    parts.push(panel("결합 그래프 (Repository · Execution · Cross-Graph Mapping)", explain +
-      graphCanvas(m, lay, true, "결합 그래프", state) + sourceNote("run " + cur.run.run_id + " graphs/" + short((cur.iv.graph || {}).graph_id, 12) + "… (노드·엣지 ID는 앞 16자)") +
-      (repoGraph(cur.run.task_id) ? '<p class="small">' + linkTo(state, { tab: "graph", gmode: "repo", rtask: cur.run.task_id }, "이 과제의 Repository Graph 전체 보기 →", "") + "</p>" : "")));
-    parts.push('<div class="grid2">' + panel("원인 후보 (가설)", table(["순위", "종류", "위치", "점수", "구성", "관계", "관측"], (tr.candidates || []).map((c) => [fmt(c.rank), esc(c.kind), esc((c.path || "") + (c.qualified_name ? "::" + c.qualified_name : "")),
+      ? "<p>이 결합 그래프에는 코드↔실행 교차 연결이 0개다. 미해결 기록: " + esc(Object.entries(reasons).map(([k, v]) => k + " " + v + "건").join(", ") || "없음") + ". 공개 검사 파서 " +
+        esc(parsers.join(", ")) + "는 suite 단위 결과만 남겨, 실패 사례 " + esc(frames.length) + "건 모두 traceback frame이 없고 테스트 ID가 검사 ID(" + esc([...new Set(frames.map((f) => f.test_id))].join(", ")) +
+        ")다. 매핑 규칙은 근거 없는 TESTS_TARGET·FAILS_AT를 만들지 않으므로 앵커에서 코드 노드로 가는 경로가 없고, 정책은 <code>INSUFFICIENT_TYPED_EVIDENCE</code>로 GENERIC_RETRY를 선택했다. 개선 방향: 공개 검사 결과를 테스트 함수·frame 단위로 기록.</p>"
+      : "<p>실패 앵커에서 TESTS_TARGET 등 근거 있는 연결을 따라 코드 노드까지 도달했고, 후보 " + esc((tr.candidates || []).length) + "개와 경로 " + esc((tr.paths || []).length) +
+        "개를 기록했다. 후보는 원인 확정이 아니라 가설(observation=inferred)이다. <strong>탐색 경로만 강조</strong>를 누르면 경로가 보인다.</p>";
+    parts.push(fold(cross === 0 ? "왜 원인 후보가 0개인가" : "탐색 결과 해설", explain, { open: false }));
+    parts.push(fold("원인 후보 " + esc((tr.candidates || []).length) + "개와 탐색 경로", table(["순위", "종류", "위치", "점수", "구성", "관계", "관측"], (tr.candidates || []).map((c) => [fmt(c.rank), esc(c.kind), esc((c.path || "") + (c.qualified_name ? "::" + c.qualified_name : "")),
       isNum(c.score) ? c.score.toFixed(3) : "N/A", esc(compText(c.components)), esc((c.relations || []).join("→")), esc(c.observation + (c.alternative ? " · 대안" : ""))]), { numeric: [0, 3], empty: "후보 없음 — 근거 없는 후보는 만들지 않는다" }) +
       "<h3>탐색 경로</h3>" + ((tr.paths || []).length ? "<ol>" + tr.paths.map((p) => "<li>" + (p.nodes || []).map((n, i) => esc(names[n] || n) + (i < (p.relations || []).length ? ' <span class="muted">—' + esc(p.relations[i]) + "(" + esc((p.directions || [])[i] || "") + ")→</span> " : "")).join("") + ' <span class="muted">비용 ' + esc(p.cost) + "</span></li>").join("") + "</ol>" : '<p class="muted">경로 없음 — 앵커에서 코드 노드로 가는 근거 있는 연결이 없었다.</p>') +
-      kv([["탐색 한도", esc("깊이 " + tr.depth_limit + " · 방문 " + tr.visit_limit + " · 분기 " + tr.branch_limit + " · top-k " + tr.top_k)], ["허용 관계", esc((tr.allowed_relations || []).join(", "))]])) +
-      warningsPanel(m, "미해결 연결과 경고") + "</div>");
-    parts.push("<details class=\"panel\"><summary>엣지 표 (" + esc((gd.edges || []).length) + ")</summary>" + table(["관계", "출발", "도착", "관측", "근거"], (gd.edges || []).map((x) => [esc(x.relation) + (x.cross ? ' <span class="badge s1">교차</span>' : ""), esc(names[x.source] || x.source), esc(names[x.target] || x.target), esc(x.observation), na(x.basis)])) + "</details>");
+      kv([["탐색 한도", esc("깊이 " + tr.depth_limit + " · 방문 " + tr.visit_limit + " · 분기 " + tr.branch_limit + " · top-k " + tr.top_k + (tr.truncated ? " · truncated" : ""))], ["허용 관계", esc((tr.allowed_relations || []).join(", "))]])));
+    parts.push(fold("미해결 연결과 경고 " + esc((gd.warnings || []).length) + "개", warningsBody(m)));
+    parts.push(fold("엣지 표 " + esc((gd.edges || []).length) + "개", table(["관계", "출발", "도착", "관측", "근거"], (gd.edges || []).map((x) => [esc(x.relation) + (x.cross ? ' <span class="badge s1">교차</span>' : ""), esc(names[x.source] || x.source), esc(names[x.target] || x.target), esc(x.observation), na(x.basis)]))));
     return parts.join("");
   }
 
@@ -1562,22 +1512,21 @@
     const task = cur.run.task_id;
     const rows = COND.map((c) => {
       const r = slotRun(e, task, c);
-      const s = slotOf(e, task, c);
-      if (!r || !s) return [condName(c), '<span class="muted">기록 없음</span>', "", "", "", "", "", "", ""];
+      const sl = slotOf(e, task, c);
+      if (!r || !sl) return [condName(c), '<span class="muted">기록 없음</span>', "", "", "", "", "", "", ""];
       const iv = (r.interventions || [])[0];
-      const k = state.exp + "|" + r.run_id;
-      return [condName(c) + (r.run_id === cur.run.run_id ? ' <span class="badge s1">현재</span>' : ""), status(s.first_turn_public), iv ? esc((iv.trigger_ids || []).join(",") + " → " + iv.strategy) : '<span class="muted">없음</span>',
-        iv ? (iv.graph ? "그래프 (교차 " + ((iv.graph_detail || {}).edges || []).filter((x) => x.cross).length + ")" : "일반") : "—", fmt(s.recoveries_delivered || 0), status(s.final_public), status(s.evaluation_status), fmt(s.model_tokens),
-        '<a href="' + esc(nav(state, { tab: "replay", case: k, step: "0" })) + '">Replay</a>'];
+      return [condName(c) + (r.run_id === cur.run.run_id ? ' <span class="muted">(현재)</span>' : ""), status(sl.first_turn_public), iv ? esc((iv.trigger_ids || []).join(",") + " → " + iv.strategy) : '<span class="muted">없음</span>',
+        iv ? (iv.graph ? "그래프 (교차 " + ((iv.graph_detail || {}).edges || []).filter((x) => x.cross).length + ")" : "일반") : "—", fmt(sl.recoveries_delivered || 0), status(sl.final_public), status(sl.evaluation_status), fmt(sl.model_tokens),
+        '<a href="' + esc(nav(state, { tab: "replay", case: state.exp + "|" + r.run_id, step: "0" })) + '">Replay</a>'];
     });
     const pairs = (((e.derived || {}).identical_input_pairs || {}).pairs || []).filter((p) => p.task_id === task);
-    return panel("같은 과제 " + task + "의 조건별 실행", table(["조건", "1턴 공개 검사", "개입", "진단", "복구", "최종 공개 검사", "독립 판정", "모델 토큰", ""], rows, { numeric: [4, 7] }) +
+    return fold("같은 과제 " + esc(task) + "의 조건별 실행", table(["조건", "1턴 공개 검사", "개입", "진단", "복구", "최종 공개 검사", "독립 판정", "모델 토큰", ""], rows, { numeric: [4, 7] }) +
       (pairs.length ? '<p class="small">입력 동일성 (B/D, C/E): ' + pairs.map((p) => esc(p.pair.split("").join("·") + " — 첫 메시지 " + (p.same_initial_message ? "동일" : "다름") + ", 모든 메시지 " + (p.same_all_messages ? "동일" : "다름") + ", 판정 " + p.verdict.join(" / "))).join(" · ") + "</p>" : "") +
       '<p class="small muted">1회 반복 기록이다. 같은 입력에서도 판정이 갈릴 수 있으므로 이 표의 차이를 정책 효과로 해석하지 않는다.</p>');
   }
 
   function replay(state) {
-    const parts = [header(state, ["복구 Replay", "저장된 실행 기록을 단계별로 다시 보여 준다. 모델이나 Codex를 호출하지 않으며, 라이브 실행이 아니다."])];
+    const parts = [header(state, ["복구 Replay", "저장된 실행 기록을 단계별로 다시 보여 준다. 모델이나 Codex를 호출하지 않는다."])];
     const cases = replayCases(state);
     if (!cases.length) return parts.join("") + panel("Replay 사례 없음", "<p>이 데이터 기준·실험에는 재생할 기록이 없다.</p>");
     const pk = picks(state);
@@ -1592,25 +1541,26 @@
     parts.push('<div class="filters">' + sel + '<span class="ctl" role="group" aria-label="재생 제어"><button type="button" class="btn" data-act="first"' + (step === 0 ? " disabled" : "") + ' aria-label="처음으로">⏮ 처음</button>' +
       '<button type="button" class="btn" data-act="prev"' + (step === 0 ? " disabled" : "") + '>← 이전</button><button type="button" class="btn primary" data-act="play" aria-pressed="' + PLAYING + '">' + (PLAYING ? "⏸ 일시정지" : step === STEPS.length - 1 ? "↻ 처음부터 재생" : "▶ 자동 재생") + "</button>" +
       '<button type="button" class="btn" data-act="next"' + (step === STEPS.length - 1 ? " disabled" : "") + ">다음 →</button></span></div>");
-    parts.push(cur.live ? '<div class="livebar live"><strong>라이브 실행 기록</strong> · ' + esc(label(state.exp)) + " · 실제 Codex 실행의 저장된 기록</div>"
+    parts.push(cur.live ? '<div class="livebar live"><strong>라이브 실행 기록</strong> · ' + esc(label(state.exp)) + "</div>"
       : '<div class="livebar syn"><strong>합성 검증 — 라이브 아님</strong> · 스크립트 어댑터, 모델 호출 0건. 메커니즘 동작 증거이며 실험 결과가 아니다.</div>');
     const iv = (cur.run.interventions || [])[0];
     const skip = (i) => !iv && i >= 3 && i <= 6;
-    const stepper = '<ol class="stepper" aria-label="복구 단계">' + STEPS.map((s, i) => '<li class="st a-' + STEP_ACTOR[i] + (i === step ? " on" : i < step ? " done" : "") + (skip(i) ? " skip" : "") + '"' + (i === step ? ' aria-current="step"' : "") +
-      '><button type="button" data-act="step" data-step="' + i + '"><span class="sn">' + (i + 1) + '</span><span class="sl">' + esc(s) + '</span><span class="sa">' + esc(ACTOR_KO[STEP_ACTOR[i]]) + (skip(i) ? " · 해당 없음" : "") + "</span></button></li>").join("") + "</ol>";
     const v = verdictOf(cur.run);
-    parts.push(panel(cur.title, kv([["run_id", "<code>" + esc(cur.run.run_id) + "</code>"], ["정책", esc(policyText(cur.run.policy))],
-      ["결과", "1턴 공개 " + status(cur.run.first_turn_public) + " → 최종 공개 " + status((cur.run.report || {}).public_check_status) + " · 독립 " + (cur.live ? status(v) : '<span class="muted">없음 (합성)</span>')]]) +
-      stepper + '<div class="progress" role="progressbar" aria-valuemin="1" aria-valuemax="' + STEPS.length + '" aria-valuenow="' + (step + 1) + '" aria-label="재생 진행"><span style="width:' + ((step + 1) / STEPS.length * 100).toFixed(1) + '%"></span></div>' +
-      '<div class="stepbody a-' + STEP_ACTOR[step] + '"><h3><span class="actor a-' + STEP_ACTOR[step] + '">' + esc(ACTOR_KO[STEP_ACTOR[step]]) + "</span> " + (step + 1) + ". " + esc(STEPS[step]) + "</h3>" + replayStep(state, cur.run, step, !cur.exp) + "</div>" +
-      '<div class="legend"><span><span class="sw" style="background:var(--codex)"></span>Codex의 행동</span><span><span class="sw" style="background:var(--aah)"></span>AAH의 관측·개입</span><span><span class="sw" style="background:var(--eval)"></span>독립 평가</span><span>원인 후보는 가설이며 확정 원인이 아님</span></div>'));
+    const stepper = '<ol class="stepper" aria-label="복구 단계">' + STEPS.map((x, i) => '<li class="st a-' + STEP_ACTOR[i] + (i === step ? " on" : i < step ? " done" : "") + (skip(i) ? " skip" : "") + '"' + (i === step ? ' aria-current="step"' : "") +
+      '><button type="button" data-act="step" data-step="' + i + '"><span class="sn">' + (i + 1) + '</span><span class="sl">' + esc(x) + '</span><span class="sa">' + esc(ACTOR_KO[STEP_ACTOR[i]]) + (skip(i) ? " · 해당 없음" : "") + "</span></button></li>").join("") + "</ol>";
+    parts.push('<section class="rp"><h2 class="rp-title">' + esc(cur.title) + '</h2><p class="rp-status">1턴 공개 ' + status(cur.run.first_turn_public) + " → 최종 공개 " + status((cur.run.report || {}).public_check_status) +
+      " · 독립 판정 " + (cur.live ? status(v) : '<span class="muted">없음 (합성)</span>') + "</p>" + stepper +
+      '<div class="progress" role="progressbar" aria-valuemin="1" aria-valuemax="' + STEPS.length + '" aria-valuenow="' + (step + 1) + '" aria-label="재생 진행"><span style="width:' + ((step + 1) / STEPS.length * 100).toFixed(1) + '%"></span></div>' +
+      '<div class="stepbody a-' + STEP_ACTOR[step] + '"><h3><span class="actor a-' + STEP_ACTOR[step] + '">' + esc(ACTOR_KO[STEP_ACTOR[step]]) + "</span> " + (step + 1) + ". " + esc(STEPS[step]) + "</h3>" + replayStep(state, cur.run, step, !cur.exp) + "</div></section>");
+    parts.push(fold("실행 메타데이터 — run_id · 정책", kv([["run_id", "<code>" + esc(cur.run.run_id) + "</code>"], ["정책", esc(policyText(cur.run.policy))],
+      ["색 구분", "Codex의 행동 · AAH의 관측·개입 · 독립 평가 (원인 후보는 가설이며 확정 원인이 아님)"]])));
     if (cur.exp) parts.push(sameTaskCompare(state, cur));
     return parts.join("");
   }
 
   // ------------------------------------------------------------------ audit
   function audit(state) {
-    const parts = [header(state, ["실험 감사", "결과를 믿을 수 있는지 확인한다: 데이터 기준과 고정 해시, 무효 실험과 결함 수정, 사전 동결, 정책 격리, 재현 검증, 한계와 미측정 항목."])];
+    const parts = [header(state, ["실험 감사", "연구 신뢰성과 재현성: 데이터 기준과 고정 해시, 실험 버전과 결함 수정, 사전 동결, 정책 격리, 재현 검증, 한계."])];
     const ids = experimentsIn(state.release);
     const r = release(state.release);
     const st = releaseStats(state);
@@ -1621,7 +1571,11 @@
       return [esc(label(id)), statusBadge((exp(id) || {}).status), pin ? hashShort(pin, 12) : '<span class="muted">고정 안 됨</span>', hashShort(entry.data_sha256, 12),
         ok === null ? '<span class="muted">—</span>' : ok ? '<span class="badge good">' + icon("check", "sm") + "일치</span>" : '<span class="badge crit">불일치</span>', esc(stamp(entry.exported_at))];
     });
-    parts.push(panel("데이터 기준과 버전", kv([
+    const recTiles = '<div class="tiles">' + tile("탐색 가능한 실행 기록", fmt(st.total), "아래 합계") + tile("유효", fmt(st.runs.valid), st.valid.map(label).join(", ") || "없음") +
+      tile("무효 (이력 보존)", fmt(st.runs.invalid), st.invalid.map(label).join(", ") || "없음") + (st.runs.open ? tile("결과 미확정", fmt(st.runs.open), st.open.map(label).join(", ")) : "") +
+      tile("합성 검증", fmt(st.runs.synthetic), "모델 호출 0 · 라이브 아님") + "</div>" +
+      '<p class="small muted">연구 결론에는 유효 실험만 쓰고, 무효·합성 기록은 합산하지 않는다.</p>';
+    parts.push(panel("데이터 기준과 버전", recTiles + kv([
       ["선택한 데이터 기준", state.release === LATEST ? '<span class="chip warn">최신 데이터 · 고정본 아님</span> 현재 저장소의 모든 실험 (진행 중 포함)' : r ? esc(r.label || r.release_id) + " · " + esc(r.kind || "") + " · 생성 " + esc(stamp(r.created_at)) + " " + basisChip(state) : "N/A"],
       ["주 실험", esc(r ? label(r.primary) : label(primaryExp(state)))],
       ["유효 / 무효 / 미확정", esc(st.valid.length + " / " + st.invalid.length + " / " + st.open.length + " 실험 (실행 기록 " + st.runs.valid + " / " + st.runs.invalid + " / " + st.runs.open + ", 합성 " + st.runs.synthetic + ")")],
@@ -1640,7 +1594,20 @@
           " · 원천 파일 " + esc((m.source || {}).inputs) + "개</p>" + kv([["원천 입력 해시", hashFull((m.source || {}).inputs_sha256)], ["data_sha256", hashFull(m.data_sha256)], ["content_sha256", hashFull(m.content_sha256)]]) +
           table(["시각", "이전 상태", "새 상태"], (m.status_history || []).map((h) => [esc(stamp(h.at)), esc(h.from || "—"), esc(h.to)])) : "") + "</details>";
     });
-    parts.push(panel("실험 버전별 상태와 이력", blocks.join("")));
+    parts.push(runSummary(state));
+    const verRows = (C().experiments || []).map((x) => {
+      const p = x.progress || {};
+      const ee = exp(x.key) || {};
+      const sl = ee.slots || [];
+      return [esc(x.key), esc(x.label || ee.label || ""), statusBadge(x.status), p.planned ? esc(p.evaluated + "/" + p.planned) : esc(sl.filter((rr) => rr.evaluation_status).length + "/" + sl.length),
+        esc(stamp(x.exported_at)), hashShort(x.data_sha256, 12)];
+    });
+    parts.push(panel("실험 버전과 상태", table(["실험 ID", "이름", "상태", "판정 슬롯", "데이터 내보낸 시각", "데이터 해시"], verRows) +
+      '<p class="small muted">유효 · 탐색적 = 주 결과 / 무효 = 결함 이력으로 보존 / 진행 중·분석 전·미검토 = 결과 미확정. 상태는 사람이 검토한 등록부에서만 정한다.</p>' + blocks.join("") +
+      fold("release (결과 고정본)", table(["release", "이름", "종류", "생성 시각", "주 실험", "포함 실험"], releaseList().map((rr) =>
+        [esc(rr.release_id), esc(rr.label), esc(rr.kind), esc(stamp(rr.created_at)), esc(rr.primary), esc(Object.keys(rr.experiments || {}).join(", "))])))));
+    const settings = runSettings(state);
+    if (settings) parts.push(fold(label(state.exp) + " 실행 설정 (동결 기준)", settings));
     const finalized = ids.map(exp).filter((e) => e && e.derived && e.derived.commands);
     if (finalized.length) {
       const maxv = Math.max(1, ...finalized.map((e) => e.derived.commands.total || 0));

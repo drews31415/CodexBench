@@ -104,6 +104,17 @@ Streamlit Community Cloud 앱은 12시간 방문이 없으면 잠들기 때문�
 
 검증 (2026-11-28, Windows 11, Python 3.12.10, Node 24, Chrome): `python -m pytest tests -q -p no:cacheprovider` → 303 passed, 5 skipped (Streamlit 미설치 환경의 Streamlit 화면 테스트; 작업 전 기준 298 passed, 5 skipped). 대시보드 원본을 마지막으로 고친 뒤 `test_static_site.py`·`test_submission_bundle.py`·`test_public_export.py` 34 passed(실제 브라우저 검사 포함). `REPOSITORY_GRAPHS_REPRODUCED`, `STATIC_SITE_REPRODUCED`, `PUBLIC_STORE_VERIFIED`, `SUBMISSION_PUBLIC_VERIFIED`, `SUBMISSION_BUNDLE_REPRODUCED`, `MAIN_FREEZE_REPRODUCED 5ef565bd…`. release의 검증 기록(`verification-record.json`, 2026-11-27)은 고정본이라 다시 만들지 않았다.
 
+## 5차 정리: 대시보드 정보 구조 간소화 (2026-11-28)
+
+새 기능 없이 정보 구조와 디자인만 정리했다. 개요를 승인된 시안(5개 영역)대로 바꾸고, 각 화면은 핵심 시각 자료를 먼저 두고 상세 기록은 접힌 영역이나 실험 감사 화면으로 옮겼다. 기존 기능·공개 데이터·연구 결과와 한계 표기는 그대로 접근할 수 있다. 상세는 [DASHBOARD_REWORK_2026-11-28.md](docs/project/DASHBOARD_REWORK_2026-11-28.md) §7.
+
+| 파일 | 내용 |
+| --- | --- |
+| `analysis/dashboard/app.js`, `style.css`, `template.html` | 개요 5개 영역, 화면별 우선순위 재배치와 접기, 중립 디자인(흰 바탕·얇은 구분선·그림자 없음), 헤더 간소화 |
+| `docs/dashboard/index.html` | 다시 생성 |
+| `tests/integration/test_static_site.py`, `dashboard_browser.js` | 실행 요약·무효 배너·실행 기록 수 검사를 실험 감사 화면으로 옮김, 개요 링크 5개·간단 다이어그램·접힌 아키텍처 검사, 다크 배경색 갱신 |
+| `docs/submission/JUDGE_GUIDE.md` | 웹 5분 경로를 개요의 링크 4개 + 감사 링크로 갱신 |
+
 ## 검증
 
 검증 결과는 [SUBMISSION_CHECKLIST.md](SUBMISSION_CHECKLIST.md)의 SUB14·SUB15와 `docs/submission/data/verification-record.json`에 기록했다.
