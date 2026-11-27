@@ -137,6 +137,12 @@ def test_site_renders_repository_graphs_replay_steps_and_notices():
     for value in (f">{passed:,}<", "시스템 동작 방식", "핵심 기능 탐색", "연구 결과", "Harness Engineering", "Loop Engineering"):
         assert value in overview, value
     assert f">{runs}<" in result["probes"]["audit:submission-2026-11-27:aah-main-emergency-v2"]
+    # Analysis screens list only the final experiment; the invalid one stays reachable from the audit screen.
+    probes = result["probes"]
+    assert 'value="aah-main-emergency-v1"' not in probes["benchmark:submission-2026-11-27:aah-main-emergency-v2"]
+    assert 'value="aah-main-emergency-v1"' in probes["benchmark:submission-2026-11-27:aah-main-emergency-v1"]
+    assert "Main v1 실행 기록 보기" in probes["audit:submission-2026-11-27:aah-main-emergency-v2"]
+    assert "일치 8/8건" in probes["audit:submission-2026-11-27:aah-main-emergency-v2"]
 
 
 def _chrome() -> str | None:

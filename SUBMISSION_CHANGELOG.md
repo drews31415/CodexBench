@@ -115,6 +115,10 @@ Streamlit Community Cloud 앱은 12시간 방문이 없으면 잠들기 때문�
 | `tests/integration/test_static_site.py`, `dashboard_browser.js` | 실행 요약·무효 배너·실행 기록 수 검사를 실험 감사 화면으로 옮김, 개요 링크 5개·간단 다이어그램·접힌 아키텍처 검사, 다크 배경색 갱신 |
 | `docs/submission/JUDGE_GUIDE.md` | 웹 5분 경로를 개요의 링크 4개 + 감사 링크로 갱신 |
 
+## 6차 정리: 분석 화면은 최종 실험만 (2026-11-28)
+
+무효 실험(Main v1)을 실험 선택 목록과 그래프 진단 기록 목록에서 숨기고, 실험 감사 화면에서만 열 수 있게 했다. 데이터·제출 release·실행 기록 구성 표기는 바꾸지 않았다. 실험 감사 화면에 실험별 그래프 대조 요약(v2 1/1, v1 8/8 일치)을 추가했다. 상세는 [DASHBOARD_REWORK_2026-11-28.md](docs/project/DASHBOARD_REWORK_2026-11-28.md) §8.
+
 ## 검증
 
 검증 결과는 [SUBMISSION_CHECKLIST.md](SUBMISSION_CHECKLIST.md)의 SUB14·SUB15와 `docs/submission/data/verification-record.json`에 기록했다.

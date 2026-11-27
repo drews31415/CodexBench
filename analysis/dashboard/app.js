@@ -317,7 +317,7 @@
   // ------------------------------------------------------------------ graph and replay catalogues
   function graphEntries(state) {
     const out = [];
-    for (const id of experimentsIn(state.release)) {
+    for (const id of experimentsIn(state.release).filter((x) => x === state.exp)) {
       const e = exp(id);
       if (!e) continue;
       const runs = Object.values(e.runs || {}).sort((a, b) => (a.task_id + a.condition < b.task_id + b.condition ? -1 : 1));
@@ -427,7 +427,8 @@
     const exps = experimentsIn(state.release);
     const e = exp(state.exp);
     return '<div class="filters" role="group" aria-label="데이터 기준 선택">' + select("release", state.release, releaseOptions(), "데이터 기준") +
-      (exps.length ? select("exp", state.exp, exps.map((id) => [id, label(id) + " · " + ((exp(id) || {}).status_label || "")]), "실험", e ? e.status_reason : "") : "") +
+      (exps.length ? select("exp", state.exp, exps.filter((id) => id === state.exp || !isInvalid((exp(id) || {}).status)).map((id) => [id, label(id) + " · " + ((exp(id) || {}).status_label || "")]),
+        "실험", e ? e.status_reason : "") : "") +
       (extra || "") + "</div>";
   }
 
@@ -1304,19 +1305,25 @@
       '<aside class="gside"><div class="gdetail" aria-live="polite" aria-label="선택한 노드 정보">' + (sel ? nodeDetail(m, sel) : graphIntro(m)) + "</div>" + graphFilters(m) + "</aside></div>";
   }
 
-  function compareWithRuns(state, task, m) {
-    const entries = graphEntries(state).filter((x) => x.live && x.run.task_id === task);
-    if (!entries.length) return '<p class="muted">이 데이터 기준에는 이 과제에서 그래프 진단이 기록된 라이브 실행이 없다. 실험 시점 그래프와 대조할 기록이 없다.</p>';
+  // Code-side structure of a run-time graph against the re-extracted Repository Graph of the same task.
+  function structureDiff(task, gd) {
+    const rg = repoGraph(task);
+    if (!rg || !gd) return null;
+    const m = modelFromRepo(rg);
     const nodeKey = (nodes) => nodes.map((n) => n.kind + " " + n.label).sort();
     const edgeKey = (mm) => { const lab = new Map(mm.nodes.map((n) => [n.id, n.label])); return mm.edges.filter((ed) => !ed.cross && lab.has(ed.s) && lab.has(ed.t) && mm.nodes.find((n) => n.id === ed.s).ns === "repo" && mm.nodes.find((n) => n.id === ed.t).ns === "repo").map((ed) => ed.rel + " " + lab.get(ed.s) + " → " + lab.get(ed.t)).sort(); };
-    const diff = (a, b) => { const cnt = {}; a.forEach((x) => { cnt[x] = (cnt[x] || 0) + 1; }); let extra = 0; b.forEach((x) => { if (cnt[x]) cnt[x] -= 1; else extra += 1; }); return [Object.values(cnt).reduce((s, v) => s + v, 0), extra]; };
-    const base = { n: nodeKey(m.nodes), e: edgeKey(m) };
+    const diff = (a, b) => { const cnt = {}; a.forEach((x) => { cnt[x] = (cnt[x] || 0) + 1; }); let extra = 0; b.forEach((x) => { if (cnt[x]) cnt[x] -= 1; else extra += 1; }); return [Object.values(cnt).reduce((t, v) => t + v, 0), extra]; };
+    const lm = modelFromDetail(gd, task);
+    const [nm, nx] = diff(nodeKey(m.nodes), nodeKey(lm.nodes.filter((n) => n.ns === "repo")));
+    const [em, ex] = diff(edgeKey(m), edgeKey(lm));
+    return { same: !nm && !nx && !em && !ex, nm, nx, em, ex };
+  }
+
+  function compareWithRuns(state, task) {
+    const entries = graphEntries(state).filter((x) => x.live && x.run.task_id === task);
+    if (!entries.length) return '<p class="muted">선택한 실험(' + esc(label(state.exp)) + ")에는 이 과제의 그래프 진단 기록이 없어 대조할 기록이 없다. 무효 실험(v1) 기록과의 대조 결과는 실험 감사 화면에 있다.</p>";
     const rows = entries.map((x) => {
-      const lm = modelFromDetail(x.iv.graph_detail, task);
-      const repoOnly = { nodes: lm.nodes.filter((n) => n.ns === "repo"), edges: lm.edges };
-      const [nm, nx] = diff(base.n, nodeKey(repoOnly.nodes));
-      const [em, ex] = diff(base.e, edgeKey(lm));
-      const same = !nm && !nx && !em && !ex;
+      const { same, nm, nx, em, ex } = structureDiff(task, x.iv.graph_detail);
       return [esc(label(x.exp.experiment_id)) + " " + statusBadge(x.exp.status), condName(x.run.condition), esc(x.iv.intervention_id),
         esc((x.run.report || {}).changed_paths && x.run.report.changed_paths.length ? x.run.report.changed_paths.join(", ") : "없음"),
         same ? '<span class="badge good">코드 노드·관계 일치</span>' : '<span class="badge warn">다름: 노드 −' + nm + "/+" + nx + " · 관계 −" + em + "/+" + ex + "</span>",
@@ -1356,7 +1363,7 @@
         (!counts.TEST_FUNCTION && testFnInTests ? "<p><strong>테스트 함수가 FUNCTION으로 기록됨.</strong> 빌더는 <code>Test</code>로 시작하는 클래스 안의 <code>test_</code> 메서드만 TEST_FUNCTION으로 인식한다. 이 과제의 검사 클래스(" +
           esc(g.nodes.filter((n) => n.kind === "CLASS" && isTestPath(n.path)).map((n) => n.qualified_name).join(", ")) + ")는 이 규칙에 맞지 않아 테스트 메서드 " + testFnInTests + "개가 FUNCTION, 그 호출이 CALLS로 기록됐고 TESTS 관계는 0개다. 기록을 바꾸지 않고 그대로 보여 준다 (개선 과제).</p>" : "") +
         sourceNote("public_data/repository_graphs/" + task + ".json · " + (prov.source || "") + " · source revision " + short(prov.source_revision, 12) + "… · " + (prov.builder || "") + " · 모델 호출 0")));
-      parts.push(fold("실험 시점 그래프와 대조", compareWithRuns(state, task, m)));
+      parts.push(fold("실험 시점 그래프와 대조", compareWithRuns(state, task)));
       parts.push(fold("미해결 관계와 경고 " + esc((g.warnings || []).length) + "개", warningsBody(m)));
       return parts.join("");
     }
@@ -1587,8 +1594,13 @@
       const e = exp(id);
       if (!e) return "";
       const m = ((D && D.manifests) || {})[id] || {};
+      const graphs = Object.values(e.runs || {}).flatMap((r) => (r.interventions || []).filter((iv) => iv.graph_detail).map((iv) => structureDiff(r.task_id, iv.graph_detail))).filter(Boolean);
+      const records = id === state.exp ? "" : '<p class="small">' + linkTo(state, { tab: "trace", exp: id }, esc(label(id)) + " 실행 기록 보기", "") + " · " +
+        linkTo(state, { tab: "replay", exp: id }, "Replay", "") + (graphs.length ? " · " + linkTo(state, { tab: "graph", exp: id, gmode: "diag" }, "그래프 진단 기록", "") : "") +
+        (isInvalid(e.status) ? ' <span class="muted">— 무효 실험은 분석 화면의 실험 목록에 나오지 않는다</span>' : "") + "</p>";
       return "<details" + (id === state.exp ? " open" : "") + "><summary><strong>" + esc(label(id)) + "</strong> " + statusBadge(e.status) + " <code>" + esc(id) + "</code></summary>" +
-        "<p>" + esc(e.status_reason || "") + "</p>" +
+        "<p>" + esc(e.status_reason || "") + "</p>" + records +
+        (graphs.length ? '<p class="small">실험 시점 그래프 진단 ' + graphs.length + "건 — 재추출 Repository Graph와 코드 노드·관계 일치 " + graphs.filter((g) => g.same).length + "/" + graphs.length + "건</p>" : "") +
         table(["기록", "단계", "내용"], (e.timeline || []).map((t) => [esc(t.ref), esc(t.step), esc(t.detail)])) +
         (m.exported_at ? '<p class="small muted">데이터 내보낸 시각 ' + esc(stamp(m.exported_at)) + " · 상태 갱신 " + esc(stamp(m.status_updated_at)) +
           " · 원천 파일 " + esc((m.source || {}).inputs) + "개</p>" + kv([["원천 입력 해시", hashFull((m.source || {}).inputs_sha256)], ["data_sha256", hashFull(m.data_sha256)], ["content_sha256", hashFull(m.content_sha256)]]) +
